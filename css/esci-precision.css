@@ -1,0 +1,98 @@
+/*
+Program       esci-precision.css
+Author        Gordon Moore
+Date          20 August 2020
+Description   CSS for esci precision
+Licence       GNU General Public LIcence Version 3, 29 June 2007
+*/
+
+/* #region Version history
+
+0.0.1   Initial version
+
+
+#endregion */
+
+.red {
+  color: red;
+}
+
+.black {
+  color: black;
+}
+
+.small {
+  font-size: 1.3rem;
+}
+
+.greek2 {
+  font-size: 2.2rem;
+}
+
+/*----------------------------------split into 2 panels--------------------------------*/
+
+#main2 {
+  /*split into left and right panels*/
+  display: grid;
+  grid-template-columns: 40rem auto;
+  grid-column-gap: 8px;
+  height: 100%;
+} 
+
+/*----------------------------------left panel-----------------------------------------------------*/
+
+
+/*----------------tab-----------------*/
+
+#smarttab {
+  margin-top: 2px;
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+/*override*/
+.st-theme-round > .tab-content > .tab-pane {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+/*---------------tab headers----------------------------------------------------------*/
+
+.nav-link {
+  font-size: 1.6rem !important;
+}
+
+/*----------------Unpaired data tab----------------------------------------------------*/
+
+#tab-1 {
+  font-size: 1.6rem !important;
+}
+
+
+
+/*----------------Paired data tab------------------------------------------------------*/
+
+#tab-2 {
+  font-size: 1.6rem !important;
+}
+
+
+
+
+
+
+/*----------------------------------right panel display--------------------------------*/
+
+#rightpanel {
+  border: 1px solid grey;
+  display: grid;
+  grid-template-rows: auto;
+}
+
+/*----------------------------------Display area----------------------------------------*/
+
+#display {
+  background-color: white;
+}
+
+
