@@ -34,6 +34,8 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
     <!-- stylesheets -->
     <link href=./css/smart_tab_esci.css rel=stylesheet type=text/css> 
 
+    <link href=./css/ion.rangeSlider.css rel=stylesheet type=text/css>
+
     <link href=./css/tipped.css rel=stylesheet type=text/css />
  
     <link href=./css/esci.css rel=stylesheet type=text/css>
@@ -48,6 +50,8 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
     <script src=./js/d3.min.js></script>
 
     <script src=./js/jquery.smartTab.min.js></script>
+
+    <script src=./js/ion.rangeSlider.min.js></script>
 
     <script src=./js/tipped.min.js></script>
 
@@ -89,10 +93,39 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
             <!-------------------------------------Unpaired data tab----------------------------------------->                
             <div id="tab-1" class="tab-pane" role="tabpanel">
 
-              <!-------------------------------------Tab 1 Panel 1 xxx Unpaired----------------------------------------->                
-              <div id=unpairedpanel>
-                <div id=xxx>
+              <div id=unpairedpanels>
+
+                <!-------------------------------------Tab 1 Panel 1 Target MoE Unpaired----------------------------------------->                
+                <div id=targetmoepanel>
+                  <div><span class=red>1 </span>Target MoE of 95% CI <span id=ciud class=backcolour>0.0</span></div>
+                  <div class=small>...set by slider below figure</div>
                 </div>
+
+                <!-------------------------------------Tab 1 Panel 2 N Curves Unpaired----------------------------------------->                
+                <div id=ncurvesudpanel>
+                  <div><span class=red>2 </span><em>N</em> curves</div>
+                  <div><input id=ncurveudavg type=radio name=ncurveud checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
+                  <div><input id=ncurveudass type=radio name=ncurveud><em>N</em> curve for target MoE, <span class=small1><strong>with 99% assurance</strong></span></div>
+                </div>
+
+                <!-------------------------------------Tab 1 Panel 3 N Display Values Unpaired----------------------------------------->                
+                <div id=displayvaluesudpanel>
+                  <div><span class=red>3 </span>Display values</div>
+                  <div>Display all <em>N</em> values <input id=displayvaluesud type=checkbox></div>
+                </div>
+
+                <!-------------------------------------Tab 1 Panel 4 Truncate display Unpaired----------------------------------------->                
+                <div id=truncatedisplayudpanel>
+                  <div><span class=red>4 </span>Truncate display at target MoE of </div>
+                  <div id=truncatedisplayudsliderpanel>
+                    <div id=truncatedisplayudsliderdiv><input id=truncatedisplayudslider type=text/></div>
+                    <div><img id=truncatedisplayudnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+                    <div><img id=truncatedisplayudnudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+                    <input id=truncatedisplayudval type=text>
+                  </div>
+          
+                </div>
+
               </div>
 
             </div>
@@ -100,9 +133,47 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
             <!-------------------------------------Paired data tab----------------------------------------->                
             <div id="tab-2" class="tab-pane" role="tabpane1">
 
-              <div id=pairedpanel>
-                <!-------------------------------------Tab 2 Panel 1 yyy Paired----------------------------------------->                
-                <div class=yyy>
+              <div id=pairedpanels>
+
+                <!-------------------------------------Tab 2 Panel 1 Population correlation Paired----------------------------------------->                
+                <div id=populationcorrelationpanel>
+                  <div><span class=red>1 </span>Population correlation</div>
+                  <div id=correlationrhosliderpanel>
+                    <div id=correlationrhotitle>Correlation <em>&rho;</em></div>
+                    <div id=correlationrhosliderdiv><input id=correlationrhoslider type=text/></div>
+                    <div><img id=correlationrhonudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+                    <div><img id=correlationrhonudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+                    <input id=correlationrhoval type=text>
+                  </div>
+
+
+                  <div><span class=red>2 </span>Target MoE of 95% CI <span id=cipd class=backcolour>0.0</span></div>
+                  <div class=small>...set by slider below figure</div>
+                </div>
+
+                <!-------------------------------------Tab 2 Panel 3 N Curves Paired----------------------------------------->                
+                <div id=ncurvespdpanel>
+                  <div><span class=red>3 </span><em>N</em> curves</div>
+                  <div><input id=ncurvepdavg type=radio name=ncurvepd checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
+                  <div><input id=ncurvepdass type=radio name=ncurvepd><em>N</em> curve for target MoE, <span class=small1><strong>with 99% assurance</strong></span></div>
+                </div>
+
+                <!-------------------------------------Tab 2 Panel 4 N Display Values Paired----------------------------------------->                
+                <div id=displayvaluespdpanel>
+                  <div><span class=red>4 </span>Display values</div>
+                  <div>Display all <em>N</em> values <input id=displayvaluespd type=checkbox></div>
+                </div>
+
+                <!-------------------------------------Tab 2 Panel 5 Truncate display Paired----------------------------------------->                
+                <div id=truncatedisplaypdpanel>
+                  <div><span class=red>5 </span>Truncate display at target MoE of </div>
+                  <div id=truncatedisplaypdsliderpanel>
+                    <div id=truncatedisplaypdsliderdiv><input id=truncatedisplaypdslider type=text/></div>
+                    <div><img id=truncatedisplaypdnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+                    <div><img id=truncatedisplaypdnudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+                    <input id=truncatedisplaypdval type=text>
+                  </div>
+
                 </div>
               </div>
 
@@ -124,6 +195,15 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
         
       <div id=rightpanel>     
         <div id=display></div>
+
+        <div id=targetmoesliderpanel>
+          <div id=targetmoetitle>Set target MoE</div>
+          <div id=targetmoesliderdiv><input id=targetmoeslider type=text/></div>
+          
+          <div><img id=targetmoenudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+          <div><img id=targetmoenudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+        </div>
+
       </div>
 
     </div>

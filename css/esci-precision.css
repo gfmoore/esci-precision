@@ -25,9 +25,39 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
   font-size: 1.3rem;
 }
 
+.small1 {
+  font-size: 1.4rem;
+}
+
+.backcolour {
+  border: 1px solid darkgrey;
+  background-color: lemonchiffon;
+  padding-left:0.2rem;
+  padding-right: 0.2rem;
+}
+
 .greek2 {
   font-size: 2.2rem;
 }
+
+.icons {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-top: 2.6rem;
+}
+
+.slidericons {
+  margin-top: 2.8rem;
+}
+
+.slidericons:hover {
+  background-color: lightgray;
+}
+
+.slidericons:active {
+  background-color: darkgrey;
+}
+
 
 /*----------------------------------split into 2 panels--------------------------------*/
 
@@ -62,21 +92,127 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
   font-size: 1.6rem !important;
 }
 
-/*----------------Unpaired data tab----------------------------------------------------*/
+/*----------------------------------Unpaired data tab----------------------------------------------------*/
 
 #tab-1 {
-  font-size: 1.6rem !important;
+  font-size: 1.5rem !important;
 }
 
+/*---------------Tab 1 Panel 1 Population Correlation----------------------------------------------*/
 
+#targetmoepanel {
+  border: 1px solid black;
+  background-color: #FFFF99;
+  padding: 0.5rem;
+}
 
-/*----------------Paired data tab------------------------------------------------------*/
+/*---------------Tab 1 Panel 2 N curves----------------------------------------------*/
+
+#ncurvesudpanel {
+  border: 1px solid black;
+  background-color: #CCFFFF;
+  padding: 0.5rem;
+}
+
+/*---------------Tab 1 Panel 3 Display values----------------------------------------------*/
+
+#displayvaluesudpanel {
+  border: 1px solid black;
+  background-color: #FFBBDD;
+  padding: 0.5rem;
+}
+
+/*---------------Tab 1 Panel 4 Truncate display----------------------------------------------*/
+
+#truncatedisplayudpanel {
+  border: 1px solid black;
+  background-color: #DDFFDD;
+  padding: 0.5rem;
+}
+
+#truncatedisplayudsliderpanel {
+  display: grid;
+  grid-template-columns: 25rem 2rem 3rem 5rem;
+  grid-row-gap: 3rem;
+  margin-top: 1rem;
+}
+
+#truncatedisplayudval {
+  margin-top: 3rem;
+  height: 2rem;
+  width: 4rem;
+}
+
+/*--------------------------------------Paired data tab------------------------------------------------------*/
 
 #tab-2 {
-  font-size: 1.6rem !important;
+  font-size: 1.5rem !important;
+}
+
+/*---------------Tab 2 Panel 1 Population Correlation----------------------------------------------*/
+
+#populationcorrelationpanel {
+  border: 1px solid black;
+  background-color: #FFFF99;
+  padding: 0.5rem;
+}
+
+#correlationrhotitle {
+  margin-top: 3rem;
+}
+
+#correlationrhosliderpanel {
+  display: grid;
+  grid-template-columns: 10rem 18rem 2rem 3rem 5rem;
+  grid-row-gap: 3rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+#correlationrhoval {
+  margin-top: 3rem;
+  height: 2rem;
+  width: 4.5rem;
 }
 
 
+
+/*---------------Tab 2 Panel 2 N curves----------------------------------------------*/
+
+#ncurvespdpanel {
+  border: 1px solid black;
+  background-color: #CCFFFF;
+  padding: 0.5rem;
+}
+
+/*---------------Tab 2 Panel 3 Display values----------------------------------------------*/
+
+#displayvaluespdpanel {
+  border: 1px solid black;
+  background-color: #FFBBDD;
+  padding: 0.5rem;
+}
+
+/*---------------Tab 2 Panel 4 Truncate display----------------------------------------------*/
+
+#truncatedisplaypdpanel {
+  border: 1px solid black;
+  background-color: #DDFFDD;
+  padding: 0.5rem;
+}
+
+#truncatedisplaypdsliderpanel {
+  display: grid;
+  grid-template-columns: 25rem 2rem 3rem 5rem;
+  grid-row-gap: 3rem;
+  margin-top: 1rem;
+}
+
+#truncatedisplaypdval {
+  margin-top: 3rem;
+  height: 2rem;
+  width: 4rem;
+}
 
 
 
@@ -86,13 +222,46 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 #rightpanel {
   border: 1px solid grey;
   display: grid;
-  grid-template-rows: auto;
+  grid-template-rows: auto 15rem;
 }
 
 /*----------------------------------Display area----------------------------------------*/
 
 #display {
   background-color: white;
+}
+
+
+/*-------------MoE Target slider--------------------------------------------------------*/
+
+#targetmoetitle {
+  font-size: 1.7rem;
+  padding-left: 0rem;
+  padding-top: 2.8rem;
+}
+
+#targetmoesliderpanel {
+  position: relative;
+  height:6.0rem;
+}
+
+/*---------------Truncate display unpaired data slider--------------*/
+
+#truncatedisplayudslider {
+
+}
+
+
+/*---------------Truncate display paired data slider--------------*/
+
+#truncatedisplayudslider {
+
+}
+
+/*---------------Correlation rho paired data slider--------------*/
+
+#correlationrhoslider {
+
 }
 
 
