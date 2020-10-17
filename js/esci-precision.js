@@ -143,7 +143,7 @@ $(function() {
       transition: {
           animation: 'slide-horizontal', // Effect on navigation, none/fade/slide-horizontal/slide-vertical/slide-swing
           speed: '400', // Transion animation speed
-          easing:'' // Transition animation easing. Not supported without a jQuery easing plugin
+          //easing:'' // Transition animation easing. Not supported without a jQuery easing plugin
       },
       autoProgress: { // Auto navigate tabs on interval
           enabled: false, // Enable/Disable Auto navigation
@@ -158,10 +158,8 @@ $(function() {
     });
 
     //goto Unpaired tab
-    $('#smarttab').smartTab("goToTab", 0);
-    $('#smarttab').smartTab("goToTab", 1);
-    $('#smarttab').smartTab("goToTab", 0);
-    
+    //$('#smarttab').smartTab("goToTab", 0);
+
     setTooltips();
 
     //get initial values for height/width
@@ -193,6 +191,10 @@ $(function() {
       tab = 'Paired';
 
     }
+	
+    setupSliders();
+
+    clear();
   });
 
   function resize() {
@@ -243,16 +245,6 @@ $(function() {
     //clear();
     
   }
-
-  //change tabs
-  $("#smarttab").on("showTab", function(e, anchorObject, tabIndex) {
-    if (tabIndex === 0) tab = 'Unpaired';
-    if (tabIndex === 1) tab = 'Paired';
-
-    setupSliders();
-
-    clear();
-  });
 
   function setupSliders() {
     $('#targetmoeslider').ionRangeSlider({
@@ -372,6 +364,7 @@ $(function() {
     $truncatedisplayudval.val(truncatedisplayud.toFixed(2));    
     $truncatedisplaypdval.val(truncatedisplaypd.toFixed(2));
     $correlationrhoval.val(correlationrho.toFixed(2));
+
   }
 
   /*---------------------------------------------Tab 1 Panel 2 N Curves radio button-------------------*/
