@@ -224,13 +224,14 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 #rightpanel {
   border: 1px solid grey;
   display: grid;
-  grid-template-rows: auto 15rem;
+  grid-template-rows: auto 9rem;
 }
 
 /*----------------------------------Display area----------------------------------------*/
 
 #display {
   background-color: white;
+  margin-right: 55px;
 }
 
 
@@ -243,6 +244,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 }
 
 #targetmoesliderpanel {
+  margin-top: 0.5rem;
   position: relative;
   height:6.0rem;
 }

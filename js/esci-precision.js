@@ -26,12 +26,11 @@ $(function() {
 
   let tab                     = 'Unpaired';                                     //what tab?
 
-  const display            = document.querySelector('#display');        //display of pdf area
+  const display               = document.querySelector('#display');        //display of pdf area
 
-  //let realHeight              = 100;                                          //the real world height for the pdf display area
-  let maxN = 100;
-  let margin                  = {top: 0, right: 10, bottom: 0, left: 70};     //margins for pdf display area
-  let width;                                                                  //the true width of the pdf display area in pixels
+  let maxN = 800;
+  let margin                  = {top: 0, right: 30, bottom: 0, left: 70};     //margins for  display area
+  let width;                                                                  //the true width of thedisplay area in pixels
   let heightD;   
   let rwidth;                                                                 //the width returned by resize
   let rheight;                                                                //the height returned by resize
@@ -90,7 +89,7 @@ $(function() {
   //tab 2 panel 1
   const $cipd = $('#cipd');
   let $correlationrhoslider = $('#correlationrhoslider');
-  let correlationrho = -0.9;
+  let correlationrho = 0.7;
   $correlationrhoval = $('#correlationrhoval');
   $correlationrhoval.val(correlationrho.toFixed(2));
   $correlationrhonudgebackward = $('#correlationrhonudgebackward');
@@ -118,17 +117,6 @@ $(function() {
   $truncatedisplaypdnudgeforward = $('#truncatedisplaypdnudgeforward');
 
 
-
-  // //api for getting width, height of element - only gets element, not entire DOM
-  // // https://www.digitalocean.com/community/tutorials/js-resize-observer
-  // const resizeObserver = new ResizeObserver(entries => {
-  //   entries.forEach(entry => {
-  //     rwidth = entry.contentRect.width;
-  //     //rHeight = entry.contentRect.height;  //doesn't work
-  //     rheight = $('#display').outerHeight(true);
-  //   });
-  // });
-
   //#endregion
 
   //breadcrumbs
@@ -144,8 +132,7 @@ $(function() {
       displayvaluesud = true;
     }
 
-
-    //tabs
+    //tab switching
     $('#smarttab').smartTab({
       selected: 0, // Initial selected tab, 0 = first tab
       theme: 'round', // theme for the tab, related css need to include for other than default theme
@@ -177,8 +164,8 @@ $(function() {
     setTooltips();
 
     //get initial values for height/width
-    rheight = $('#main').outerHeight(true);
     rwidth  = $('html').outerWidth(true)  - $('#leftpanel').outerWidth(true);
+    rheight = $('#display').outerHeight(true);
 
     width   = rwidth - margin.left - margin.right;  
     heightD = rheight - margin.top - margin.bottom;
@@ -210,7 +197,7 @@ $(function() {
     targetmoetop = 0;
     //targetmoeleft = 0.1 * width + margin.left - 0;
     targetmoeleft = margin.left;
-    targetmoewidth = width - 200;
+    targetmoewidth = width - 50;
 
     //position the d slider title
     $('#targetmoetitle').css({
@@ -223,7 +210,7 @@ $(function() {
     $('#targetmoesliderdiv').css({
       position:'absolute',
       top: targetmoetop,
-      left: targetmoeleft+80,
+      left: targetmoeleft,
       width: targetmoewidth
     });
 
@@ -231,12 +218,12 @@ $(function() {
     $targetmoenudgebackward.css({
       position:'absolute',
       top: targetmoetop,
-      left: targetmoeleft+targetmoewidth+100,
+      left: targetmoeleft+targetmoewidth+10,
     })
     $targetmoenudgeforward.css({
       position:'absolute',
       top: targetmoetop,
-      left: targetmoeleft+targetmoewidth+130,
+      left: targetmoeleft+targetmoewidth+30,
     })    
 
     // #endregion
@@ -258,63 +245,24 @@ $(function() {
   $("#smarttab").on("showTab", function(e, anchorObject, tabIndex) {
     if (tabIndex === 0) {
       tab = 'Unpaired';
+      
     }
     if (tabIndex === 1) {
       tab = 'Paired';
     }
-	
-    //setupSliders();
 
-    //clear();
+    clear();
   });
 
   function resize() {
 
-    rheight = $('#main').outerHeight(true);
     rwidth  = $('html').outerWidth(true)  - $('#leftpanel').outerWidth(true);
+    rheight = $('#main').outerHeight(true);
 
     width   = rwidth - margin.left - margin.right;  
     heightD = rheight - margin.top - margin.bottom;
 
     clear();
-
-
-    // if (tab === 'Unpaired') {}
-    // if (tab === 'Paired') {}
-
-    // //reposition target moe slider on resize
-    // targetmoetop = 0;
-    // //targetmoeleft = 0.1 * width + margin.left - 0;
-    // targetmoeleft = margin.left;
-    // targetmoewidth = width - 200;
-
-    // //position the d slider title
-    // $('#targetmoetitle').css({
-    //   position:'absolute',
-    //   top: targetmoetop,
-    //   left: 10
-    // })
-    
-    // //position the target slider
-    // $('#targetmoesliderdiv').css({
-    //   position:'absolute',
-    //   top: targetmoetop,
-    //   left: targetmoeleft+80,
-    //   width: targetmoewidth
-    // });
-
-    // //position the nudege bars
-    // $targetmoenudgebackward.css({
-    //   position:'absolute',
-    //   top: targetmoetop,
-    //   left: targetmoeleft+targetmoewidth+100,
-    // })
-    // $targetmoenudgeforward.css({
-    //   position:'absolute',
-    //   top: targetmoetop,
-    //   left: targetmoeleft+targetmoewidth+130,
-    // })    
-    
   }
 
   function setupSliders() {
@@ -359,6 +307,8 @@ $(function() {
           $truncatedisplayudslider.update({ from: truncatedisplayud });
         }
         sliderinuse = true;  //don't update slider in redrawDisplay()
+        targetmoe = truncatedisplayud;
+        updatetargetmoeslider();
         redrawDisplay();
       }
     })
@@ -371,7 +321,7 @@ $(function() {
       type: 'single',
       min: -1.0,
       max: 1.0,
-      from: -0.9,
+      from: 0.7,
       step: 0.01,
       prettify: prettify2,
       //on slider handles change
@@ -441,11 +391,32 @@ $(function() {
     $truncatedisplaypdval.val(truncatedisplaypd.toFixed(2));
     $correlationrhoval.val(correlationrho.toFixed(2));
 
-    
+    if (tab === 'Unpaired') {
+      if (targetmoe < truncatedisplayud) {
+        targetmoe = truncatedisplayud;
+        updatetargetmoeslider();
+      }
+    }
+
+    if (tab === 'Paired') {
+      if (targetmoe < truncatedisplaypd) {
+        targetmoe = truncatedisplaypd;
+        updatetargetmoeslider();
+      }
+    }
+
+    drawNline();
     drawTargetMoELine();
   }
 
   function setupAxes() {
+
+    if (Nline.length > 0) {  //get max of N if it hasn't be done
+      maxN = d3.max(Nline, function(d) { return +d.N;} );
+          
+      //now round up to nearest 100
+      maxN = 100 * Math.ceil(maxN/100);
+    }
 
     //clear axes
     d3.selectAll('.leftaxis').remove();
@@ -462,8 +433,7 @@ $(function() {
     heightD = $('#display').outerHeight(true) - margin.top - margin.bottom;
 
     x = d3.scaleLinear().domain([0, 1.5]).range([margin.left, width]);
-    y = d3.scaleLinear().domain([0, maxN]).range([heightD-50, 100]);  //realheight = 100
-
+    y = d3.scaleLinear().domain([0, maxN]).range([heightD-50, 50]);  
 
     //test co-ords
     // svgD.append('circle').attr('class', 'test').attr('cx', x(0)).attr('cy', y(0)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
@@ -526,75 +496,109 @@ $(function() {
     // }
 
   }
-  
+
+  function drawNline() {
+    let cv; //critical value
+    Nline = [];
+    let N;
+    let oldN;
+    maxN = 0;    //get maximum y (N) value
+
+    d3.selectAll('.Nline').remove();
+    d3.selectAll('.Nlinetext').remove();
+
+    alpha = 0.05;
+    
+    if (tab === 'Unpaired') {
+      //get N,    note fmoe is the f that Prof. Cumming uses in book
+      for (let fmoe = truncatedisplayud; fmoe < 1.55; fmoe += 0.05) {
+
+        //iterate for N
+        N = 1000;
+        oldN = 0;
+        while (Math.abs(N-oldN) > 0.01 ) {
+          oldN = N;
+          cv = Math.abs(jStat.studentt.inv( alpha/2, 2*N - 2 ));
+          N = 2 * (cv/fmoe) * (cv/fmoe);
+        }
+
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N) } )
+      }
+
+    }
+
+    if (tab === 'Paired') {
+      //get N,    note fmoe is the f that Prof. Cumming uses in book
+      for (let fmoe = truncatedisplayud; fmoe < 1.55; fmoe += 0.05) {
+      //for (let fmoe = 0.9; fmoe < 1.55; fmoe += 0.05) {
+        //iterate for N
+        N = 1000;
+        oldN = 0;
+        while (Math.abs(N-oldN) > 0.01 ) {
+          oldN = N;
+          cv = Math.abs(jStat.studentt.inv( alpha/2, N - 1 ));
+          N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) ;
+          if (N > oldN) {  //blowup possible
+            N = oldN;
+            break;
+          }
+        }
+
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N) } )
+      }
+
+    }
+
+    //now display the line
+    setupAxes();  //have to call this again as will need to redisplay vertical axis as maxN changes
+
+    //display N line
+    line = d3.line()
+    .x(function(d, i) { return x(d.fmoe); })
+    .y(function(d, i) { return y(d.N); });
+
+    svgD.append('path').attr('class', 'Nline').attr('d', line(Nline)).attr('stroke', 'black').attr('stroke-width', 2).attr('fill', 'none');
+
+    //dislay N values
+    d3.selectAll('.Nlinetext').remove();
+    if (displayvaluesud) {
+      $.each(Nline, function(key, value) {
+        svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+        //don't draw if intersection with targetmoe as already drawn in bold
+        if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+      })
+    }
+
+  }
+
   function drawTargetMoELine() {
     let n;
 
     d3.selectAll('.targetmoeline').remove();
 
-    svgD.append('line').attr('class', 'targetmoeline').attr('x1', x(targetmoe)).attr('y1', y(0)).attr('x2', x(targetmoe)).attr('y2', y(maxN) - 30).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'none');
-    svgD.append('text').text('Target MoE').attr('class', 'targetmoeline').attr('x', x(targetmoe) - 35 ).attr('y', y(maxN) - 45 ).attr('text-anchor', 'start').attr('fill', 'black');
+    //draw vertical line
+    svgD.append('line').attr('class', 'targetmoeline').attr('x1', x(targetmoe)).attr('y1', y(0)).attr('x2', x(targetmoe)).attr('y2', y(maxN)).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'none');
+    svgD.append('text').text('Target MoE').attr('class', 'targetmoeline').attr('x', x(targetmoe) - 35 ).attr('y', y(maxN)-10).attr('text-anchor', 'start').attr('fill', 'black');
 
-    //find the N for that fmoe value
+    // if (tab === 'Unpaired') {
+    // }
+
+    // if (tab === 'Paired') {
+    // }
+  
+    //find the N for that fmoe value from the Nline data array of objects (probably a functional way, but hey this works)
     for (let i = 0; i < Nline.length; i += 1) {
       if (Math.abs(targetmoe - Nline[i].fmoe) < 0.01) {
         n = Nline[i].N;
         break;
       }
     }
+
+    //draw a blob and N value at intersection
     svgD.append('circle').attr('class', 'targetmoeline').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-    svgD.append('text').text(n).attr('class', 'targetmoeline').attr('x', x(targetmoe) ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-weight', 'bold');
+    svgD.append('text').text(n).attr('class', 'targetmoeline').attr('x', x(targetmoe) + 10 ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-weight', 'bold');
+
   }
-
-  function drawNline() {
-
-    let cv; //critical value
-    Nline = [];
-    let N;
-    let oldN;
-    maxN = 0;    //get maximum y (N) value
-    
-    alpha = 0.05;
-    //cv = jStat.studentt.inv( alpha/2, N - 1 );       //critical value
-    //cv = Math.abs(jStat.normal.inv( alpha/2, 0, 1));    //critical value  e.g. 0.05 gives 1.96
-
-
-    //note fmoe is the f that Prof. Cumming uses in book
-    for (let fmoe = 0.1; fmoe < 1.55; fmoe += 0.05) {
-
-      //iterate for N
-      N = 1000;
-      oldN = 0;
-      while (Math.abs(N-oldN) > 0.01 ) {
-        oldN = N;
-        cv = Math.abs(jStat.studentt.inv( alpha/2, 2*N - 2 ));
-        N = 2 * (cv/fmoe) * (cv/fmoe);
-      }
-
-      if (N > maxN) maxN = N;
-      Nline.push({ fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N.toFixed(0))})
-    }
-
-    setupAxes();
-
-    line = d3.line()
-    .x(function(d, i) { return x(d.fmoe); })
-    .y(function(d, i) { return y(d.N); });
-
-   svgD.append('path').attr('class', 'Nline').attr('d', line(Nline)).attr('stroke', 'black').attr('stroke-width', 2).attr('fill', 'none');
-
-   //dislay N values
-   d3.selectAll('.Nlinetext').remove();
-   if (displayvaluesud) {
-    $.each(Nline, function(key, value) {
-      svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      //don't draw if intersection with targetmoe as already drawn in bold
-      if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
-    })
-   }
-  }
-
-
 
   /*---------------------------------------------Tab 1 Panel 2 N Curves radio button-------------------*/
 
@@ -635,8 +639,8 @@ $(function() {
   })
 
 
+  // #region  -----------------------------------Nudge bars ------------------------------------------------
 
-  // #region  nudge bars
   /*---------------------------------------------Target MoE nudge bars ----------------------------------------------*/
 
   //Target MoE nudge backwards
@@ -750,6 +754,7 @@ $(function() {
     $truncatedisplayudslider.update({
       from: truncatedisplayud
     })
+    
     redrawDisplay();
   }
 
@@ -817,6 +822,7 @@ $(function() {
     $truncatedisplaypdslider.update({
       from: truncatedisplaypd
     })
+
     redrawDisplay();
   }
 
