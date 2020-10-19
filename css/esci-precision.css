@@ -247,23 +247,27 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
   height:6.0rem;
 }
 
+#targetmoesliderdiv .irs-grid-text {
+  font-size: 1.4rem !important;
+}
+
 /*---------------Truncate display unpaired data slider--------------*/
 
-#truncatedisplayudslider {
+/* #truncatedisplayudslider {
 
-}
+} */
 
 
 /*---------------Truncate display paired data slider--------------*/
 
-#truncatedisplayudslider {
+/* #truncatedisplayudslider {
 
-}
+} */
 
 /*---------------Correlation rho paired data slider--------------*/
 
-#correlationrhoslider {
+/* #correlationrhoslider {
 
-}
+} */
 
 

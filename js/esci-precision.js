@@ -15,6 +15,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 //#endregion 
 
 let version = '0.0.1';
+let test = true;
 
 'use strict';
 $(function() {
@@ -27,20 +28,28 @@ $(function() {
 
   const display            = document.querySelector('#display');        //display of pdf area
 
-  let realHeight              = 100;                                          //the real world height for the pdf display area
+  //let realHeight              = 100;                                          //the real world height for the pdf display area
+  let maxN = 100;
   let margin                  = {top: 0, right: 10, bottom: 0, left: 70};     //margins for pdf display area
   let width;                                                                  //the true width of the pdf display area in pixels
-  let heightP;   
+  let heightD;   
   let rwidth;                                                                 //the width returned by resize
   let rheight;                                                                //the height returned by resize
 
+  let x;
+  let y;
+
+  alpha = 0.05;  //significance level
+
   let svgD;                                                                   //the svg reference to pdfdisplay
  
+  let Nline = [];
+
   let $targetmoeslider                 = $('#targetmoeslider');
   const $targetmoenudgebackward        = $('#targetmoenudgebackward');
   const $targetmoenudgeforward         = $('#targetmoenudgeforward');
 
-  let targetmoe = 0;
+  let targetmoe = 0.1;
   let sliderinuse = false;
 
   let targetmoeslidertop;
@@ -110,15 +119,15 @@ $(function() {
 
 
 
-  //api for getting width, height of element - only gets element, not entire DOM
-  // https://www.digitalocean.com/community/tutorials/js-resize-observer
-  const resizeObserver = new ResizeObserver(entries => {
-    entries.forEach(entry => {
-      rwidth = entry.contentRect.width;
-      //rHeight = entry.contentRect.height;  //doesn't work
-      rheight = $('#display').outerHeight(true);
-    });
-  });
+  // //api for getting width, height of element - only gets element, not entire DOM
+  // // https://www.digitalocean.com/community/tutorials/js-resize-observer
+  // const resizeObserver = new ResizeObserver(entries => {
+  //   entries.forEach(entry => {
+  //     rwidth = entry.contentRect.width;
+  //     //rHeight = entry.contentRect.height;  //doesn't work
+  //     rheight = $('#display').outerHeight(true);
+  //   });
+  // });
 
   //#endregion
 
@@ -130,7 +139,12 @@ $(function() {
   initialise();
 
   function initialise() {
-    
+    if (test) {
+      $displayvaluesud.prop('checked', true);
+      displayvaluesud = true;
+    }
+
+
     //tabs
     $('#smarttab').smartTab({
       selected: 0, // Initial selected tab, 0 = first tab
@@ -163,12 +177,15 @@ $(function() {
     setTooltips();
 
     //get initial values for height/width
-    rwidth  = $('#display').outerWidth(true);
-    rheight = $('#display').outerHeight(true);
+    rheight = $('#main').outerHeight(true);
+    rwidth  = $('html').outerWidth(true)  - $('#leftpanel').outerWidth(true);
+
+    width   = rwidth - margin.left - margin.right;  
+    heightD = rheight - margin.top - margin.bottom;
 
     //do this once?
     //set a reference to the displaypdf area
-    d3.selectAll('svg > *').remove();  //remove all elements under svgP
+    d3.selectAll('svg > *').remove();  //remove all elements under svgD
     $('svg').remove();                 //remove the all svg elements from the DOM
 
     //pdf display
@@ -177,38 +194,18 @@ $(function() {
     $ciud.text(0.1);
     $cipd.text(0.1);
 
-    resize();
+    setupSliders();
+    clear();
 
   }
 
-  //Switch tabs
-  $("#smarttab").on("showTab", function(e, anchorObject, tabIndex) {
-    if (tabIndex === 0) {
-      tab = 'Unpaired';
-
-    }
-    if (tabIndex === 1) {
-      tab = 'Paired';
-
-    }
-	
-    setupSliders();
-
-    clear();
-  });
-
-  function resize() {
-    //have to watch out as the width and height do not always seem precise to pixels
-    //browsers apparently do not expose true element width, height.
-    //also have to think about box model. outerwidth(true) gets full width, not sure resizeObserver does.
-    resizeObserver.observe(display);  //note doesn't get true outer width, height
-
-    width   = rwidth - margin.left - margin.right;  
-    heightP = rheight - margin.top - margin.bottom;
+  //set everything to a default state.
+  function clear() {
 
     if (tab === 'Unpaired') {}
     if (tab === 'Paired') {}
 
+    // #region position sliders
     //reposition target moe slider on resize
     targetmoetop = 0;
     //targetmoeleft = 0.1 * width + margin.left - 0;
@@ -242,7 +239,81 @@ $(function() {
       left: targetmoeleft+targetmoewidth+130,
     })    
 
+    // #endregion
+
+    //setsliders back to minimum
+    // targetmoe = 0.1;
+    // updatetargetmoeslider();
+    // $ciud.text(targetmoe.toFixed(2));
+    // $cipd.text(targetmoe.toFixed(2));
+
+    setupAxes();
+
+    drawNline();
+    drawTargetMoELine();
+  }
+  
+
+  //Switch tabs
+  $("#smarttab").on("showTab", function(e, anchorObject, tabIndex) {
+    if (tabIndex === 0) {
+      tab = 'Unpaired';
+    }
+    if (tabIndex === 1) {
+      tab = 'Paired';
+    }
+	
+    //setupSliders();
+
     //clear();
+  });
+
+  function resize() {
+
+    rheight = $('#main').outerHeight(true);
+    rwidth  = $('html').outerWidth(true)  - $('#leftpanel').outerWidth(true);
+
+    width   = rwidth - margin.left - margin.right;  
+    heightD = rheight - margin.top - margin.bottom;
+
+    clear();
+
+
+    // if (tab === 'Unpaired') {}
+    // if (tab === 'Paired') {}
+
+    // //reposition target moe slider on resize
+    // targetmoetop = 0;
+    // //targetmoeleft = 0.1 * width + margin.left - 0;
+    // targetmoeleft = margin.left;
+    // targetmoewidth = width - 200;
+
+    // //position the d slider title
+    // $('#targetmoetitle').css({
+    //   position:'absolute',
+    //   top: targetmoetop,
+    //   left: 10
+    // })
+    
+    // //position the target slider
+    // $('#targetmoesliderdiv').css({
+    //   position:'absolute',
+    //   top: targetmoetop,
+    //   left: targetmoeleft+80,
+    //   width: targetmoewidth
+    // });
+
+    // //position the nudege bars
+    // $targetmoenudgebackward.css({
+    //   position:'absolute',
+    //   top: targetmoetop,
+    //   left: targetmoeleft+targetmoewidth+100,
+    // })
+    // $targetmoenudgeforward.css({
+    //   position:'absolute',
+    //   top: targetmoetop,
+    //   left: targetmoeleft+targetmoewidth+130,
+    // })    
     
   }
 
@@ -252,7 +323,7 @@ $(function() {
       grid: true,
       grid_num: 5,
       type: 'single',
-      min: 0.1,
+      min: 0.0,
       max: 1.5,
       from: 0.1,
       step: 0.1,
@@ -260,7 +331,10 @@ $(function() {
       //on slider handles change
       onChange: function (data) {
         targetmoe = data.from;
-        //xbarexperimental = xbarcontrol + cohensd * sdexperimental;
+        if (targetmoe < 0.1) {
+          targetmoe = 0.1;
+          $targetmoeslider.update({ from: targetmoe });
+        }
         sliderinuse = true;  //don't update dslider in redrawdisplay()
         redrawDisplay();
       }
@@ -280,7 +354,11 @@ $(function() {
       //on slider handles change
       onChange: function (data) {
         truncatedisplayud = data.from;
-        sliderinuse = true;  //don't update slider
+        if (truncatedisplayud < 0.1) {
+          truncatedisplayud = 0.1;
+          $truncatedisplayudslider.update({ from: truncatedisplayud });
+        }
+        sliderinuse = true;  //don't update slider in redrawDisplay()
         redrawDisplay();
       }
     })
@@ -299,7 +377,7 @@ $(function() {
       //on slider handles change
       onChange: function (data) {
         correlationrho = data.from;
-        sliderinuse = true;  //don't update slider
+        sliderinuse = true;  //don't update slider  in redrawDisplay()
         redrawDisplay();
       }
     })
@@ -318,6 +396,10 @@ $(function() {
       //on slider handles change
       onChange: function (data) {
         truncatedisplaypd = data.from;
+        if (truncatedisplaypd < 0.1) {
+          truncatedisplaypd = 0.1;
+          $truncatedisplaypdslider.update({ from: truncatedisplaypd });
+        }
         sliderinuse = true;  //don't update slider
         redrawDisplay();
       }
@@ -325,47 +407,194 @@ $(function() {
     $truncatedisplaypdslider = $('#truncatedisplaypdslider').data("ionRangeSlider");
 
 
+    function prettify0(n) {
+      return n.toFixed(0);
+    }
+  
+    function prettify1(n) {
+      return n.toFixed(1);
+    }
+  
+    function prettify2(n) {
+      return n.toFixed(2);
+    }
+  
+
   }
 
-  function prettify0(n) {
-    return n.toFixed(0);
-  }
-
-  function prettify1(n) {
-    return n.toFixed(1);
-  }
-
-  function prettify2(n) {
-    return n.toFixed(2);
-  }
 
   function updatetargetmoeslider() {
+    if (targetmoe < 0.1) targetmoe = 0.1;
+    if (targetmoe > 1.5) targetmoe = 1.5;
     $targetmoeslider.update({from: targetmoe});
-  }
-
-  //set everything to a default state.
-  function clear() {
-    //setsliders back to minimum
-    targetmoe = 0.1;
-    updatetargetmoeslider();
-    $ciud.text(targetmoe);
-    $cipd.text(targetmoe);
 
   }
-
 
   function redrawDisplay() {
 
     if (!sliderinuse) updatetargetmoeslider();
     sliderinuse = false;
-    $ciud.text(targetmoe);
-    $cipd.text(targetmoe);
+    $ciud.text(targetmoe.toFixed(2));
+    $cipd.text(targetmoe.toFixed(2));
 
     $truncatedisplayudval.val(truncatedisplayud.toFixed(2));    
     $truncatedisplaypdval.val(truncatedisplaypd.toFixed(2));
     $correlationrhoval.val(correlationrho.toFixed(2));
 
+    
+    drawTargetMoELine();
   }
+
+  function setupAxes() {
+
+    //clear axes
+    d3.selectAll('.leftaxis').remove();
+    d3.selectAll('.leftaxisminorticks').remove();
+    d3.selectAll('.leftaxistext').remove();
+
+    d3.selectAll('.bottomaxis').remove();
+    d3.selectAll('.bottomaxisminorticks').remove();
+    d3.selectAll('.bottomaxistext').remove();
+
+    d3.selectAll('.headertext').remove();
+
+    width   = rwidth - margin.left - margin.right;  
+    heightD = $('#display').outerHeight(true) - margin.top - margin.bottom;
+
+    x = d3.scaleLinear().domain([0, 1.5]).range([margin.left, width]);
+    y = d3.scaleLinear().domain([0, maxN]).range([heightD-50, 100]);  //realheight = 100
+
+
+    //test co-ords
+    // svgD.append('circle').attr('class', 'test').attr('cx', x(0)).attr('cy', y(0)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
+    // svgD.append('circle').attr('class', 'test').attr('cx', x(0)).attr('cy', y(100)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
+    // svgD.append('circle').attr('class', 'test').attr('cx', x(1.5)).attr('cy', y(0)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
+    // svgD.append('circle').attr('class', 'test').attr('cx', x(1.5)).attr('cy', y(100)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
+
+
+    //top horizontal axis
+    let xAxis = d3.axisBottom(x);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
+    svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
+
+    //left vertical axis
+    let yAxis = d3.axisLeft(y);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
+    svgD.append('g').attr('class', 'leftaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(${margin.left}, 0)` ).call(yAxis);
+
+    //add some text labels
+    svgD.append('text').text('N').attr('class', 'bottomaxistext').attr('x', 10 ).attr('y', heightD/2).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+    svgD.append('text').text('MoE of 95% CI, in population standard deviation units').attr('class', 'leftaxistext').attr('x', width/4 ).attr('y', heightD-10).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.4rem').style('font-style', 'italic');
+    
+    //add header labels
+    if (tab === 'Unpaired') {
+    svgD.append('text').text('Two groups:').attr('class', 'headertext').attr('x', 10 ).attr('y', 20).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem');
+    svgD.append('text').text('N').attr('class', 'headertext').attr('x', 130 ).attr('y', 20).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+    svgD.append('text').text('of each group, for desired precision').attr('class', 'headertext').attr('x', 150 ).attr('y', 20).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem');
+    }
+    else {
+      svgD.append('text').text('Paired data:').attr('class', 'headertext').attr('x', 10 ).attr('y', 20).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem');
+      svgD.append('text').text('N').attr('class', 'headertext').attr('x', 130 ).attr('y', 20).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('text').text('is the number of pairs, for desired precision').attr('class', 'headertext').attr('x', 150 ).attr('y', 20).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem');  
+    }
+
+    //add additional ticks for x scale
+    //the minor ticks
+    let interval = d3.ticks(0, 1.5, 16);  //gets an array of where it is putting tick marks
+
+    let i;
+    let minortick;
+    let minortickmark;
+
+    //half way ticks
+    for (i = 1; i < interval.length; i += 1) {
+      minortick = (interval[i] - interval[i-1]);
+      for (let ticks = 1; ticks <= 16; ticks += 1) {
+        minortickmark = interval[i-1] + (minortick * ticks);
+        if (minortickmark > 0 && minortickmark < 1.5) svgD.append('line').attr('class', 'bottomaxis').attr('x1', x(minortickmark)).attr('y1', 0).attr('x2', x(minortickmark) ).attr('y2', 10).attr('stroke', 'black').attr('stroke-width', 1).attr( 'transform', `translate(0, ${heightD-50})` );
+      }
+    }
+
+    //minor ticks
+    // for (i=1; i < interval.length; i += 1) {
+    //   minortick = (interval[i] - interval[i-1]) / 10;
+    //   for (let ticks = 1; ticks <= 10; ticks += 1) {
+    //     minortickmark = interval[i-1] + (minortick * ticks);
+    //     if (minortickmark > -3 && minortickmark < 3) {
+    //          svgS.append('line').attr('class', 'xaxis').attr('x1', x(minortickmark)).attr('y1', 0).attr('x2', x(minortickmark) ).attr('y2', 5).attr('stroke', 'black').attr('stroke-width', 1).attr( 'transform', `translate(0, ${heightD})` );
+    //          svgS.append('line').attr('class', 'yaxis').attr('x1', 0).attr('y1', y(minortickmark)).attr('x2', 5 ).attr('y2', y(minortickmark)).attr('stroke', 'black').attr('stroke-width', 1).attr( 'transform', `translate(0, ${heightD})` );
+    //      }
+    //   }
+    // }
+
+  }
+  
+  function drawTargetMoELine() {
+    let n;
+
+    d3.selectAll('.targetmoeline').remove();
+
+    svgD.append('line').attr('class', 'targetmoeline').attr('x1', x(targetmoe)).attr('y1', y(0)).attr('x2', x(targetmoe)).attr('y2', y(maxN) - 30).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'none');
+    svgD.append('text').text('Target MoE').attr('class', 'targetmoeline').attr('x', x(targetmoe) - 35 ).attr('y', y(maxN) - 45 ).attr('text-anchor', 'start').attr('fill', 'black');
+
+    //find the N for that fmoe value
+    for (let i = 0; i < Nline.length; i += 1) {
+      if (Math.abs(targetmoe - Nline[i].fmoe) < 0.01) {
+        n = Nline[i].N;
+        break;
+      }
+    }
+    svgD.append('circle').attr('class', 'targetmoeline').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+    svgD.append('text').text(n).attr('class', 'targetmoeline').attr('x', x(targetmoe) ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-weight', 'bold');
+  }
+
+  function drawNline() {
+
+    let cv; //critical value
+    Nline = [];
+    let N;
+    let oldN;
+    maxN = 0;    //get maximum y (N) value
+    
+    alpha = 0.05;
+    //cv = jStat.studentt.inv( alpha/2, N - 1 );       //critical value
+    //cv = Math.abs(jStat.normal.inv( alpha/2, 0, 1));    //critical value  e.g. 0.05 gives 1.96
+
+
+    //note fmoe is the f that Prof. Cumming uses in book
+    for (let fmoe = 0.1; fmoe < 1.55; fmoe += 0.05) {
+
+      //iterate for N
+      N = 1000;
+      oldN = 0;
+      while (Math.abs(N-oldN) > 0.01 ) {
+        oldN = N;
+        cv = Math.abs(jStat.studentt.inv( alpha/2, 2*N - 2 ));
+        N = 2 * (cv/fmoe) * (cv/fmoe);
+      }
+
+      if (N > maxN) maxN = N;
+      Nline.push({ fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N.toFixed(0))})
+    }
+
+    setupAxes();
+
+    line = d3.line()
+    .x(function(d, i) { return x(d.fmoe); })
+    .y(function(d, i) { return y(d.N); });
+
+   svgD.append('path').attr('class', 'Nline').attr('d', line(Nline)).attr('stroke', 'black').attr('stroke-width', 2).attr('fill', 'none');
+
+   //dislay N values
+   d3.selectAll('.Nlinetext').remove();
+   if (displayvaluesud) {
+    $.each(Nline, function(key, value) {
+      svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+      //don't draw if intersection with targetmoe as already drawn in bold
+      if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+    })
+   }
+  }
+
+
 
   /*---------------------------------------------Tab 1 Panel 2 N Curves radio button-------------------*/
 
@@ -383,7 +612,7 @@ $(function() {
 
   $displayvaluesud.on('change', function() {
     displayvaluesud = $displayvaluesud.is(':checked');
-
+    drawNline();
   })
 
   /*---------------------------------------------Tab 2 Panel 2 N Curves radio button-------------------*/
@@ -407,10 +636,8 @@ $(function() {
 
 
 
-
-
-
-   /*---------------------------------------------Target MoE nudge bars ----------------------------------------------*/
+  // #region  nudge bars
+  /*---------------------------------------------Target MoE nudge bars ----------------------------------------------*/
 
   //Target MoE nudge backwards
   $targetmoenudgebackward.on('mousedown', function() {
@@ -459,6 +686,7 @@ $(function() {
   }
 
   /*----------------------------------------truncate display ud nudge bars-----------*/
+
   //changes to the trucated display unpaired data
   $truncatedisplayudval.on('change', function() {
     if ( isNaN($truncatedisplayudval.val()) ) {
@@ -660,7 +888,7 @@ $(function() {
     redrawDisplay();
   }
 
-
+  //#endregion
 
   /*---------------------------------------------Tooltips on or off-------------------------------------- */
 
