@@ -9,7 +9,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 <!--
 0.0.1   Initial version
 0.0.2   21 Oct 2020 #2 Some development
-
+0.0.3   21 Oct 2020 #2 More development and trying to figure out calcs!!! :(
 -->
 <!--endregion -->
 
@@ -127,9 +127,37 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
           
                 </div>
 
+                <!-----------------------------------------Tab 1 Panel 5 Latest sample Confidence Interval---------------------------------------------------------->
+
+                <div id=CIsectionud>
+                  <div class='citip font18' data-tooltip><span class=red>5 </span>CIs</div>
+                  <div id=cipcntdivud class=cipcnttip data-tooltip>
+                    <div class=copcnttip data-tooltip><span>CI%  <em>C </em></span></div>
+                    <div>
+                      <select id=CIud class=copcnttip data-tooltip>
+                        <option value=0.5>50%</option>
+                        <option value=0.32>68%</option>
+                        <option value=0.2>80%</option>
+                        <option value=0.1>90%</option>
+                        <option value=0.05 selected>95%</option>
+                        <option value=0.02>98%</option>
+                        <option value=0.01>99%</option>
+                        <option value=0.002>99.8%</option>
+                        <option value=0.001>99.9%</option>
+                      </select>
+                    </div>
+                  </div>
+
+                </div>
+
+
               </div>
 
             </div>
+
+
+
+
 
             <!-------------------------------------Paired data tab----------------------------------------->                
             <div id="tab-2" class="tab-pane" role="tabpane1">
@@ -182,6 +210,32 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
                   </div>
 
                 </div>
+
+                <!-----------------------------------------Tab 2 Panel 6 Confidence Interval---------------------------------------------------------->
+
+                <div id=CIsectionpd>
+                  <div class='citip font18' data-tooltip><span class=red>5 </span>CIs</div>
+                  <div id=cipcntdivpd class=cipcnttip data-tooltip>
+                    <div class=copcnttip data-tooltip><span>CI%  <em>C </em></span></div>
+                    <div>
+                      <select id=CIpd class=copcnttip data-tooltip>
+                        <option value=0.5>50%</option>
+                        <option value=0.32>68%</option>
+                        <option value=0.2>80%</option>
+                        <option value=0.1>90%</option>
+                        <option value=0.05 selected>95%</option>
+                        <option value=0.02>98%</option>
+                        <option value=0.01>99%</option>
+                        <option value=0.002>99.8%</option>
+                        <option value=0.001>99.9%</option>
+                      </select>
+                    </div>
+                  </div>
+
+                </div>
+
+
+
               </div>
 
             </div>

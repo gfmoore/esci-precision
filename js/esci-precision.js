@@ -10,11 +10,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 /*
 0.0.1   Initial version
 0.0.2   21 Oct 2020 #2 Some development
+0.0.3   21 Oct 2020 #2 More development and trying to figure out calcs!!! :(
 
 */
 //#endregion 
 
-let version = '0.0.2';
+let version = '0.0.3';
 let test = true;
 
 'use strict';
@@ -38,10 +39,12 @@ $(function() {
   let x;
   let y;
 
-  alpha = 0.05;  //significance level
+  alphaud = 0.05;  //significance level
+  alphapd = 0.05;
 
   let svgD;                                                                   //the svg reference to pdfdisplay
  
+  let Nlinez = [];
   let Nline = [];
   let NlineAss = [];
 
@@ -80,15 +83,21 @@ $(function() {
 
   //tab 1 panel 4
   let $truncatedisplayudslider = $('#truncatedisplayudslider');
-  let truncatedisplayud = 0.05;
+  let truncatedisplayud = 0.25;
   $truncatedisplayudval = $('#truncatedisplayudval');
-  $truncatedisplayudval.val(0.05.toFixed(2));
+  $truncatedisplayudval.val(0.25.toFixed(2));
   $truncatedisplayudnudgebackward = $('#truncatedisplayudnudgebackward');
   $truncatedisplayudnudgeforward = $('#truncatedisplayudnudgeforward');
 
+  //tab 1 panel 5 CI
+  const $CIsectionud = $('#CIsectionud');
+  const $CIud = $('#CIud');
+ 
 
   //tab 2 panel 1
   const $cipd = $('#cipd');
+
+  //tab 2 panel 2
   let $correlationrhoslider = $('#correlationrhoslider');
   let correlationrho = 0.7;
   $correlationrhoval = $('#correlationrhoval');
@@ -96,27 +105,30 @@ $(function() {
   $correlationrhonudgebackward = $('#correlationrhonudgebackward');
   $correlationrhonudgeforward  = $('#correlationrhonudgeforward');
 
-  //tab 2 panel 2
-
+  //tab 2 panel 3
   const $ncurvepdavg = $('#ncurvepdavg');
   let ncurvepdavg = true;
 
   const $ncurvepdass = $('#ncurvepdass');
   let ncurvepdass = false;
 
-  //tab 2 panel 3
+  //tab 2 panel 4
 
   const $displayvaluespd = $('#displayvaluespd');
   displayvaluespd = false;
 
-  //tab 2 panel 4
+  //tab 2 panel 5
   let $truncatedisplaypdslider = $('#truncatedisplaypdslider');
-  let truncatedisplaypd = 0.05;
+  let truncatedisplaypd = 0.25;
   $truncatedisplaypdval = $('#truncatedisplaypdval');
-  $truncatedisplaypdval.val(0.05.toFixed(2));
+  $truncatedisplaypdval.val(0.25.toFixed(2));
   $truncatedisplaypdnudgebackward = $('#truncatedisplaypdnudgebackward');
   $truncatedisplaypdnudgeforward = $('#truncatedisplaypdnudgeforward');
 
+  //tab 2 panel 6 CI
+  const $CIsectionpd = $('#CIsectionpd');
+  const $CIpd = $('#CIpd');
+   
 
   //#endregion
 
@@ -134,6 +146,9 @@ $(function() {
 
       $displayvaluespd.prop('checked', true);
       displayvaluespd = true;
+
+      $CIsectionud.hide();
+      $CIsectionpd.hide();
     }
 
     //tab switching
@@ -187,8 +202,8 @@ $(function() {
     //pdf display
     svgD = d3.select('#display').append('svg').attr('width', '100%').attr('height', '100%');
 
-    $ciud.text(0.1);
-    $cipd.text(0.1);
+    $ciud.text(0.25);
+    $cipd.text(0.25);
 
     setupSliders();
     clear();
@@ -440,7 +455,8 @@ $(function() {
         maxN = d3.max(Nline, function(d) { return +d.N;} );
       }
     }
-    if (maxN < 1000) maxN = 100 * Math.ceil(maxN/100); //now round up to nearest 100
+    if (maxN < 200) maxN = 10 * Math.ceil(maxN/10);
+    if (maxN > 200 && maxN < 1000) maxN = 100 * Math.ceil(maxN/100); //now round up to nearest 100
     if (maxN >= 1000) maxN = 1000 * Math.ceil(maxN/1000); //now round up to nearest 100
 
     //clear axes
@@ -526,6 +542,7 @@ $(function() {
     //get the current values
 
     let cv; //critical value
+    Nlinez = [];
     Nline = [];
     NlineAss = [];
     let N;
@@ -538,87 +555,127 @@ $(function() {
     d3.selectAll('.Nlinetext').remove();
     d3.selectAll('.NlinetextAss').remove();
 
-    alpha = 0.05;
-    let fmoemax = 2.01;  //stupid JavaScript rounding on floating point
-    let fmoeinc = 0.05;
+    alphaud = parseFloat($CIud.val());
+    alphapd = parseFloat($CIpd.val());
+    let fmoemax = 2.005;  //stupid JavaScript rounding on floating point
+    let fmoeinc = 0.005;
     
     //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
     if (tab === 'Unpaired') {
-      //if (ncurveudavg) {
-      for (let fmoe = truncatedisplayud; fmoe <= fmoemax; fmoe += fmoeinc) {
-        //iterate for N
-        N = 10000;
-        oldN = 0;
-        while (Math.abs(N-oldN) > 0.01 ) {
-          oldN = N;
-          cv = Math.abs(jStat.studentt.inv( alpha/2, 2*N - 2 ));
+
+      //testing for z
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //o.96
+        N = 2 * (cv/fmoe) * (cv/fmoe);
+        Nlinez.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round(N) } )    
+      }
+
+      //alt version for t line
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //o.96
+        N = 2 * (cv/fmoe) * (cv/fmoe);
+
+        for (let i = 0; i < 2; i += 1) {
+          cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
           N = 2 * (cv/fmoe) * (cv/fmoe);
-          if (N > oldN) {  //blowup possible
-            N = oldN;
-            break;
-          }
         }
 
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N) } )
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round(N) } )    
       }
-      //}
+
+
+      //--------------if (ncurveudavg) {
+      // for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+      //   //iterate for N
+      //   N = 10000;
+      //   oldN = 0;
+      //   while (Math.abs(N-oldN) > 0.01 ) {
+      //     oldN = N;
+      //     cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
+      //     N = 2 * (cv/fmoe) * (cv/fmoe);
+      //     if (N > oldN || isNaN(N)) {  //blowup possible
+      //       N = oldN;
+      //       break;
+      //     }
+
+      //   }
+
+      //   Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )       
+      // }
+      //----------------}
 
       if (ncurveudass) {
-        for (let fmoe = truncatedisplayud; fmoe <= fmoemax; fmoe += fmoeinc) {
-          //iterate for N
-          N = 10000;
-          oldN = 0;
-          while (Math.abs(N-oldN) > 0.01 ) {
-            oldN = N;
-            cv = Math.abs(jStat.studentt.inv( alpha/2, 2*N - 2 ));
-            N = 2 * (cv/fmoe) * (cv/fmoe);
-            if (N > oldN) {  //blowup possible
-              N = oldN;
-              break;
-            }
-          }
 
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N+50) } )
+        //alt version for assurance
+        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+          cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //0.96
+          N = 2 * (cv/fmoe) * (cv/fmoe);
+  
+          for (let i = 0; i < 2; i += 1) {
+            cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 )) * (Math.abs(jStat.chisquare.inv(0.99, N-1)) / (N-1) );
+            N = 2 * (cv/fmoe) * (cv/fmoe);
+          }
+  
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round(N) } )    
         }
+  
+
+
+        // for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+        //   //iterate for N
+        //   N = 10000;
+        //   oldN = 0;
+        //   while (Math.abs(N-oldN) > 0.01 ) {
+        //     oldN = N;
+        //     cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
+        //     N = 2 * (cv/fmoe) * (cv/fmoe) * (jStat.chisquare.inv(0.99, N-1)/(N-1));
+        //     if (N > oldN || isNaN(N)) {  //blowup possible
+        //       N = oldN;
+        //       break;
+        //     }
+        //   }
+
+        //   NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )
+        // }
       }
     }
 
     if (tab === 'Paired') {
       //if (ncurvepdavg) {
-      for (let fmoe = truncatedisplaypd; fmoe <= fmoemax; fmoe += fmoeinc) {
+      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
         //iterate for N
         N = 10000;
         oldN = 0;
         while (Math.abs(N-oldN) > 0.01 ) {
           oldN = N;
-          cv = Math.abs(jStat.studentt.inv( alpha/2, N - 1 ));
+          cv = Math.abs(jStat.studentt.inv( alphaud/2, N - 1 ));
           N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) ;
-          if (N > oldN) {  //blowup possible
+          if (N > oldN || isNaN(N)) {  //blowup possible
             N = oldN;
             break;
           }
         }
 
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N) } )
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )
       }
       //}
 
       if (ncurvepdass) {
-        for (let fmoe = truncatedisplaypd; fmoe <= fmoemax; fmoe += fmoeinc) {
+        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
           //iterate for N
           N = 10000;
           oldN = 0;
           while (Math.abs(N-oldN) > 0.01 ) {
             oldN = N;
-            cv = Math.abs(jStat.studentt.inv( alpha/2, N - 1 ));
-            N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) ;
-            if (N > oldN) {  //blowup possible
+            cv = Math.abs(jStat.studentt.inv( alphaud/2, N - 1 ));
+            N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * Math.abs( jStat.chisquare.inv(0.99, N-1) );
+            if (N > oldN  || isNaN(N)) {  //blowup possible
               N = oldN;
               break;
             }
           }
 
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(2)), N: parseInt(N+50) } )
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )
         }
       }
     }
@@ -628,6 +685,9 @@ $(function() {
 
     if (tab === 'Unpaired') {
       if (ncurveudavg) {  //if average
+        //the z line
+        svgD.append('path').attr('class', 'Nline').attr('d', line(Nlinez)).attr('stroke', 'blue').attr('stroke-width', 2).attr('fill', 'none');
+
         svgD.append('path').attr('class', 'Nline').attr('d', line(Nline)).attr('stroke', 'black').attr('stroke-width', 2).attr('fill', 'none');
       }
       if (ncurveudass) {  //if assurance
@@ -647,13 +707,16 @@ $(function() {
     }
 
 
-    //Now decide whether to dislay N values
-
+    //Now decide whether to display N values
     if (tab === 'Unpaired' && displayvaluesud) {
       $.each(Nline, function(key, value) {
-        svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-        //don't draw if intersection with targetmoe as already drawn in bold
-        if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+        //only plot blobs at 0.05 intervals
+        if (parseInt(1000 * value.fmoe) % 50 === 0) {
+          svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+          //don't draw if intersection with targetmoe as already drawn in bold
+          if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+        }
+
       })
 
       if (ncurveudass) {
@@ -663,19 +726,24 @@ $(function() {
 
       if (displayvaluesud) {
         $.each(NlineAss, function(key, value) {
-          svgD.append('circle').attr('class', 'NlinetextAss').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-          //don't draw if intersection with targetmoe as already drawn in bold
-          if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'NlinetextAss').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'red');
+          //only plot blobs at 0.05 intervals
+          if (parseInt(1000 * value.fmoe) % 50 === 0) {
+            svgD.append('circle').attr('class', 'NlinetextAss').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
+            //don't draw if intersection with targetmoe as already drawn in bold
+            if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'NlinetextAss').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'red');
+          }
         })
       }
-
     }
 
     if (tab === 'Paired' && displayvaluespd) {
       $.each(Nline, function(key, value) {
-        svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-        //don't draw if intersection with targetmoe as already drawn in bold
-        if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+        //only plot blobs at 0.05 intervals
+        if (parseInt(1000 * value.fmoe) % 50 === 0) {
+          svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+          //don't draw if intersection with targetmoe as already drawn in bold
+          if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+        }
       })
 
       if (ncurvepdass) {
@@ -685,9 +753,12 @@ $(function() {
 
       if (displayvaluespd) {
         $.each(NlineAss, function(key, value) {
-          svgD.append('circle').attr('class', 'NlinetextAss').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-          //don't draw if intersection with targetmoe as already drawn in bold
-          if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'NlinetextAss').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'red');
+          //only plot blobs at 0.05 intervals
+          if (parseInt(1000 * value.fmoe) % 50 === 0) {
+            svgD.append('circle').attr('class', 'NlinetextAss').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
+            //don't draw if intersection with targetmoe as already drawn in bold
+            if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'NlinetextAss').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'red');
+          }
         })
       }
     }
@@ -748,22 +819,22 @@ $(function() {
     //Now add a blob and value at intersection    
     if (tab === 'Unpaired' && ncurveudavg) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 10 ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Unpaired' && ncurveudass) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 10 ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdavg) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 10 ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdass) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 10 ).attr('y', y(n) - 7 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     //draw a blob and N value at assuranceintersection
@@ -811,6 +882,18 @@ $(function() {
     drawTargetMoELine();
   })
 
+  /*---------------------------------------------Tab 1 Panel 4 Truncate MoE----------------------------*/
+
+  /*-------------------------------------------- Tab 1 Panel 5 CIs-------------------------------------*/
+
+  $CIud.on('change', function() {
+    alphaud = parseFloat($CIud.val()); 
+    drawNline();
+    drawTargetMoELine();    
+  })
+
+  /*---------------------------------------------Tab 2 Panel 1 Target MoE------------------------------*/
+
   /*---------------------------------------------Tab 2 Panel 2 N Curves radio button-------------------*/
 
   $ncurvepdavg.on('change', function() {
@@ -838,6 +921,15 @@ $(function() {
     drawTargetMoELine();
   })
 
+  /*---------------------------------------------Tab 2 Panel 5 Truncate MoE----------------------------*/
+
+ /*--------------------------------------------- Tab 2 Panel 6 CIs-------------------------------------*/
+
+ $CIpd.on('change', function() {
+  alphapd = parseFloat($CIpd.val()); 
+  drawNline();
+  drawTargetMoELine();    
+})
 
   // #region  -----------------------------------Nudge bars ------------------------------------------------
 
@@ -859,7 +951,7 @@ $(function() {
   })
 
   function targetmoenudgebackward() {
-    targetmoe -= 0.05;
+    targetmoe -= 0.005;
     if (targetmoe < 0.05) targetmoe = 0.05;
     sliderinuse = true;
     updatetargetmoeslider()
@@ -882,7 +974,7 @@ $(function() {
   })
 
   function targetmoenudgeforward() {
-    targetmoe += 0.05;
+    targetmoe += 0.005;
     if (targetmoe > 2.0) targetmoe = 2.0;
     sliderinuse = true;
     updatetargetmoeslider()
