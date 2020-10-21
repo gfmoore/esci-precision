@@ -2,13 +2,13 @@
 Program       esci-precision.html 
 Author        Gordon Moore
 Date          20 August 2020
-Description   A JavaScript implementation of esci precision for unpaired and paired data for Introduction to the New Statistics by Geoff Cumming and Robert Calin-Jageman
+Description   A JavaScript implementation of esci precision for planning for unpaired and paired data for Introduction to the New Statistics by Geoff Cumming and Robert Calin-Jageman
 Licence       GNU General Public LIcence Version 3, 29 June 2007
 -->
 <!-- #region version history-->
 <!--
 0.0.1   Initial version
-
+0.0.2   21 Oct 2020 #2 Some development
 
 -->
 <!--endregion -->
@@ -70,21 +70,21 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
         <div id=header>
           <div id=logo><img id=logoimg src=./images/logo.png></div>
           <div id=mainheading class=headingtip data-tooltip>esci web</div>
-          <div id=subheading class=headingtip data-tooltip>precision (dev)</div>
+          <div id=subheading class=headingtip data-tooltip>precision for planning</div>
           <div id=tooltipsonoff>?</div>
         </div>
 
-        <div id=breadcrumbs><span id=homecrumb class=hometip data-tooltip>Home></span><span id=distributioncrumb>precision</span></div>
+        <div id=breadcrumbs><span id=homecrumb class=hometip data-tooltip>Home></span><span id=distributioncrumb>precision for planning</span></div>
 
         <!---------------------------------Set up tabs------------------------------------------------->
         <div id="smarttab">
 
           <ul class="nav">
             <li>
-              <a class="nav-link" href="#tab-1">Unpaired Data</a>
+              <a class="nav-link" href="#tab-1">Two Independent Groups</a>
             </li>
             <li>
-              <a class="nav-link" href="#tab-2">Paired Data</a>
+              <a class="nav-link" href="#tab-2">Paired Design</a>
             </li>
           </ul>
        
@@ -96,27 +96,28 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
               <div id=unpairedpanels>
 
                 <!-------------------------------------Tab 1 Panel 1 Target MoE Unpaired----------------------------------------->                
-                <div id=targetmoepanel>
-                  <div><span class=red>1 </span>Target MoE of 95% CI <span id=ciud class=backcolour>0.0</span></div>
-                  <div class=small>...set by slider below figure</div>
+                <div id=targetmoeudpanel>
+                  <div  class=font18><span class=red>1 </span>Target MoE of 95% CI <span id=ciud class=backcolour>0.0</span></div>
+                  <div class=font15>...set by slider below figure</div>
                 </div>
 
                 <!-------------------------------------Tab 1 Panel 2 N Curves Unpaired----------------------------------------->                
                 <div id=ncurvesudpanel>
-                  <div><span class=red>2 </span><em>N</em> curves</div>
-                  <div><input id=ncurveudavg type=radio name=ncurveud checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
-                  <div><input id=ncurveudass type=radio name=ncurveud><em>N</em> curve for target MoE, <span class=small1><strong>with 99% assurance</strong></span></div>
+                  <div class=font18><span class=red>2 </span><em>N</em> curves</div>
+                  <div class=font16><input id=ncurveudavg type=radio name=ncurveud checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
+                  <div class=font16><input id=ncurveudass type=radio name=ncurveud><em>N</em> curve for target MoE, <span class=small1><strong>with 99%</strong></span></div>
+                  <div id=asstext class=small1><strong>assurance</strong></div>
                 </div>
 
                 <!-------------------------------------Tab 1 Panel 3 N Display Values Unpaired----------------------------------------->                
                 <div id=displayvaluesudpanel>
-                  <div><span class=red>3 </span>Display values</div>
-                  <div>Display all <em>N</em> values <input id=displayvaluesud type=checkbox></div>
+                  <div class=font18><span class=red>3 </span>Display values</div>
+                  <div class=font16>Display all <em>N</em> values <input id=displayvaluesud type=checkbox></div>
                 </div>
 
                 <!-------------------------------------Tab 1 Panel 4 Truncate display Unpaired----------------------------------------->                
                 <div id=truncatedisplayudpanel>
-                  <div><span class=red>4 </span>Truncate display at target MoE of </div>
+                  <div class=font18><span class=red>4 </span>Truncate display at target MoE of </div>
                   <div id=truncatedisplayudsliderpanel>
                     <div id=truncatedisplayudsliderdiv><input id=truncatedisplayudslider type=text/></div>
                     <div><img id=truncatedisplayudnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
@@ -135,38 +136,44 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
               <div id=pairedpanels>
 
-                <!-------------------------------------Tab 2 Panel 1 Population correlation Paired----------------------------------------->                
+                <!-------------------------------------Tab 2 Panel 1 Target MoE Paired----------------------------------------->                
+  
+                <div id=targetmoepdpanel>
+                  <div class=font18><span class=red>1 </span>Target MoE of 95% CI <span id=cipd class=backcolour>0.0</span></div>
+                  <div class=font15>...set by slider below figure</div>
+                </div>
+                
+                <!-------------------------------------Tab 2 Panel 2 Population correlation Paired----------------------------------------->                
                 <div id=populationcorrelationpanel>
-                  <div><span class=red>1 </span>Population correlation</div>
+                  <div class=font18><span class=red>2 </span>Population correlation</div>
                   <div id=correlationrhosliderpanel>
-                    <div id=correlationrhotitle>Correlation <em>&rho;</em></div>
+                    <div id=correlationrhotitle class=font16>Correlation <em>&rho;</em></div>
                     <div id=correlationrhosliderdiv><input id=correlationrhoslider type=text/></div>
                     <div><img id=correlationrhonudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
                     <div><img id=correlationrhonudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
                     <input id=correlationrhoval type=text>
                   </div>
-
-
-                  <div><span class=red>2 </span>Target MoE of 95% CI <span id=cipd class=backcolour>0.0</span></div>
-                  <div class=small>...set by slider below figure</div>
                 </div>
+
+
 
                 <!-------------------------------------Tab 2 Panel 3 N Curves Paired----------------------------------------->                
                 <div id=ncurvespdpanel>
-                  <div><span class=red>3 </span><em>N</em> curves</div>
-                  <div><input id=ncurvepdavg type=radio name=ncurvepd checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
-                  <div><input id=ncurvepdass type=radio name=ncurvepd><em>N</em> curve for target MoE, <span class=small1><strong>with 99% assurance</strong></span></div>
+                  <div class=font18><span class=red>3 </span><em>N</em> curves</div>
+                  <div class=font16><input id=ncurvepdavg type=radio name=ncurvepd checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
+                  <div class=font16><input id=ncurvepdass type=radio name=ncurvepd><em>N</em> curve for target MoE, <span class=small1><strong>with 99%</strong></span></div>
+                  <div id=asstext class='small1'><strong>assurance</strong></div>
                 </div>
 
                 <!-------------------------------------Tab 2 Panel 4 N Display Values Paired----------------------------------------->                
                 <div id=displayvaluespdpanel>
-                  <div><span class=red>4 </span>Display values</div>
-                  <div>Display all <em>N</em> values <input id=displayvaluespd type=checkbox></div>
+                  <div class=font18><span class=red>4 </span>Display values</div>
+                  <div class=font16>Display all <em>N</em> values <input id=displayvaluespd type=checkbox></div>
                 </div>
 
                 <!-------------------------------------Tab 2 Panel 5 Truncate display Paired----------------------------------------->                
                 <div id=truncatedisplaypdpanel>
-                  <div><span class=red>5 </span>Truncate display at target MoE of </div>
+                  <div class=font18><span class=red>5 </span>Truncate display at target MoE of </div>
                   <div id=truncatedisplaypdsliderpanel>
                     <div id=truncatedisplaypdsliderdiv><input id=truncatedisplaypdslider type=text/></div>
                     <div><img id=truncatedisplaypdnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
