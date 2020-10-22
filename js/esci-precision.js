@@ -11,11 +11,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.0.1   Initial version
 0.0.2   21 Oct 2020 #2 Some development
 0.0.3   21 Oct 2020 #2 More development and trying to figure out calcs!!! :(
+0.0.4   22 Oct 2020 #2 More investigation into formulae, in development.
 
 */
 //#endregion 
 
-let version = '0.0.3';
+let version = '0.0.4';
 let test = true;
 
 'use strict';
@@ -565,22 +566,30 @@ $(function() {
 
       //testing for z
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //o.96
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //0.96
         N = 2 * (cv/fmoe) * (cv/fmoe);
-        Nlinez.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round(N) } )    
+        if (N < 3) N = 3; //minimum N allowed is 3
+        Nlinez.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil((2+2*N)/2) } )    
       }
 
       //alt version for t line
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //o.96
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //0.96
         N = 2 * (cv/fmoe) * (cv/fmoe);
+        if (N < 3) N = 3; //minimum N allowed is 3
+//lg(fmoe.toFixed(3) + ' --> ' + N);
 
-        for (let i = 0; i < 2; i += 1) {
+        //now iterate on t 9 times
+        for (let i = 0; i < 9; i += 1) {
+          //cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*Math.ceil(N) - 2 ));
           cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
           N = 2 * (cv/fmoe) * (cv/fmoe);
+//lg(fmoe.toFixed(3) + ' --> ' + N);
         }
 
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round(N) } )    
+        //Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round((2*N+2)/2) } );   //seems a bit dubious to me adding 2 and /2 but if what is calculated is the df then fair enough    
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(N) } );   //seems a bit dubious to me adding 2 and /2 but if what is calculated is the df then fair enough    
+
       }
 
 
@@ -612,7 +621,7 @@ $(function() {
           N = 2 * (cv/fmoe) * (cv/fmoe);
   
           for (let i = 0; i < 2; i += 1) {
-            cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 )) * (Math.abs(jStat.chisquare.inv(0.99, N-1)) / (N-1) );
+            cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 )) * (Math.abs(jStat.chisquare.inv(0.995, N-1)) / (N-1) );
             N = 2 * (cv/fmoe) * (cv/fmoe);
           }
   
