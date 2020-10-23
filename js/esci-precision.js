@@ -12,11 +12,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.0.2   21 Oct 2020 #2 Some development
 0.0.3   21 Oct 2020 #2 More development and trying to figure out calcs!!! :(
 0.0.4   22 Oct 2020 #2 More investigation into formulae, in development.
+0.0.5   23 Oct 2020 #2 Mostly developed except for distribution. Closed.
 
 */
 //#endregion 
 
-let version = '0.0.4';
+let version = '0.0.5';
 let test = true;
 
 'use strict';
@@ -42,6 +43,7 @@ $(function() {
 
   alphaud = 0.05;  //significance level
   alphapd = 0.05;
+  gamma = 0.99;    //assurance level of 0.01 but used with right tail for jStat.chisquared.inv 
 
   let svgD;                                                                   //the svg reference to pdfdisplay
  
@@ -53,7 +55,7 @@ $(function() {
   const $targetmoenudgebackward        = $('#targetmoenudgebackward');
   const $targetmoenudgeforward         = $('#targetmoenudgeforward');
 
-  let targetmoe = 0.25;
+  let targetmoe = 0.4;
   let sliderinuse = false;
 
   let targetmoeslidertop;
@@ -220,7 +222,6 @@ $(function() {
     // #region position sliders
     //reposition target moe slider on resize
     targetmoetop = 0;
-    //targetmoeleft = 0.1 * width + margin.left - 0;
     targetmoeleft = margin.left;
     targetmoewidth = width - 50;
 
@@ -250,16 +251,7 @@ $(function() {
       top: targetmoetop,
       left: targetmoeleft+targetmoewidth+30,
     })    
-
     // #endregion
-
-    //setsliders back to minimum
-    // targetmoe = 0.1;
-    // updatetargetmoeslider();
-    // $ciud.text(targetmoe.toFixed(2));
-    // $cipd.text(targetmoe.toFixed(2));
-
-    //setupAxes(); //don't need this as called from drawNline
 
     drawNline();
     drawTargetMoELine();
@@ -298,7 +290,7 @@ $(function() {
       type: 'single',
       min: 0.0,
       max: 2.0,
-      from: 0.25,
+      from: 0.4,
       step: 0.005,
       prettify: prettify2,
       //on slider handles change
@@ -405,7 +397,8 @@ $(function() {
     if (targetmoe < 0.05) targetmoe = 0.05;
     if (targetmoe > 2.0) targetmoe = 2.0;
     $targetmoeslider.update({from: targetmoe});
-
+    $ciud.text(targetmoe.toFixed(2));
+    $cipd.text(targetmoe.toFixed(2));
   }
 
   function redrawDisplay() {
@@ -543,18 +536,21 @@ $(function() {
     //get the current values
 
     let cv; //critical value
-    Nlinez = [];
+    //Nlinez = [];
     Nline = [];
     NlineAss = [];
     let N;
-    let oldN;
-    maxN = 0;    //get maximum y (N) value
+    //let oldN;
+    //maxN = 0;    //get maximum y (N) value
 
     d3.selectAll('.Nline').remove();
     d3.selectAll('.NlineAss').remove();
 
     d3.selectAll('.Nlinetext').remove();
+    d3.selectAll('.Nlinetextbox').remove();
+
     d3.selectAll('.NlinetextAss').remove();
+    //d3.selectAll('.NlinetextAssbox').remove();
 
     alphaud = parseFloat($CIud.val());
     alphapd = parseFloat($CIpd.val());
@@ -564,127 +560,94 @@ $(function() {
     //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
     if (tab === 'Unpaired') {
 
-      //testing for z
+      //average
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //0.96
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
         N = 2 * (cv/fmoe) * (cv/fmoe);
         if (N < 3) N = 3; //minimum N allowed is 3
-        Nlinez.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil((2+2*N)/2) } )    
-      }
-
-      //alt version for t line
-      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //0.96
-        N = 2 * (cv/fmoe) * (cv/fmoe);
-        if (N < 3) N = 3; //minimum N allowed is 3
-//lg(fmoe.toFixed(3) + ' --> ' + N);
 
         //now iterate on t 9 times
         for (let i = 0; i < 9; i += 1) {
-          //cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*Math.ceil(N) - 2 ));
           cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
           N = 2 * (cv/fmoe) * (cv/fmoe);
-//lg(fmoe.toFixed(3) + ' --> ' + N);
+          if (N < 3) N = 3;
         }
 
-        //Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round((2*N+2)/2) } );   //seems a bit dubious to me adding 2 and /2 but if what is calculated is the df then fair enough    
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(N) } );   //seems a bit dubious to me adding 2 and /2 but if what is calculated is the df then fair enough    
-
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(N) } );   
       }
 
-
-      //--------------if (ncurveudavg) {
-      // for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-      //   //iterate for N
-      //   N = 10000;
-      //   oldN = 0;
-      //   while (Math.abs(N-oldN) > 0.01 ) {
-      //     oldN = N;
-      //     cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
-      //     N = 2 * (cv/fmoe) * (cv/fmoe);
-      //     if (N > oldN || isNaN(N)) {  //blowup possible
-      //       N = oldN;
-      //       break;
-      //     }
-
-      //   }
-
-      //   Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )       
-      // }
-      //----------------}
-
+      //assurance
+      let df;
       if (ncurveudass) {
-
-        //alt version for assurance
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-          cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //0.96
+          cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
           N = 2 * (cv/fmoe) * (cv/fmoe);
   
-          for (let i = 0; i < 2; i += 1) {
-            cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 )) * (Math.abs(jStat.chisquare.inv(0.995, N-1)) / (N-1) );
-            N = 2 * (cv/fmoe) * (cv/fmoe);
+          //first iteration - nt1 in spreadsheet
+          df = 2 *  Math.abs( jStat.chisquare.inv(gamma, N) ) ;
+          cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+          N = 2 * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(0.99, df)) ) / df;
+          if (N < 3) N = 3;
+
+          for (let i = 1; i < 9; i += 1) {
+            df = 2 * N - 2;
+            cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+            N = 2 * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+            if (N < 3) N = 3;
           }
   
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.round(N) } )    
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(N) } )    
         }
-  
-
-
-        // for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        //   //iterate for N
-        //   N = 10000;
-        //   oldN = 0;
-        //   while (Math.abs(N-oldN) > 0.01 ) {
-        //     oldN = N;
-        //     cv = Math.abs(jStat.studentt.inv( alphaud/2, 2*N - 2 ));
-        //     N = 2 * (cv/fmoe) * (cv/fmoe) * (jStat.chisquare.inv(0.99, N-1)/(N-1));
-        //     if (N > oldN || isNaN(N)) {  //blowup possible
-        //       N = oldN;
-        //       break;
-        //     }
-        //   }
-
-        //   NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )
-        // }
       }
     }
 
     if (tab === 'Paired') {
-      //if (ncurvepdavg) {
+      //average
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-        //iterate for N
-        N = 10000;
-        oldN = 0;
-        while (Math.abs(N-oldN) > 0.01 ) {
-          oldN = N;
-          cv = Math.abs(jStat.studentt.inv( alphaud/2, N - 1 ));
-          N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) ;
-          if (N > oldN || isNaN(N)) {  //blowup possible
-            N = oldN;
-            break;
-          }
+        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+        N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
+        if (N < 3) N = 3; //minimum N allowed is 3
+
+        //now iterate on t 9 times   At times, when N gets to about 3 the N starts oscillating, pick the lowest
+        minN = 999;
+        for (let i = 0; i < 9; i += 1) {
+          cv = Math.abs(jStat.studentt.inv( alphapd/2, N - 1 ));
+          N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
+
+          if (N < 3) N = 3;
+          if (N < minN) minN = N;
         }
 
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(minN) } );   
       }
-      //}
 
+      //assurance
       if (ncurvepdass) {
+        minN = 999;   //have to put this here to stop oscillations
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-          //iterate for N
-          N = 10000;
-          oldN = 0;
-          while (Math.abs(N-oldN) > 0.01 ) {
-            oldN = N;
-            cv = Math.abs(jStat.studentt.inv( alphaud/2, N - 1 ));
-            N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * Math.abs( jStat.chisquare.inv(0.99, N-1) );
-            if (N > oldN  || isNaN(N)) {  //blowup possible
-              N = oldN;
-              break;
-            }
-          }
+          cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+          N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
+          if (N < 3) N = 3; //minimum N allowed is 3
+  
+          //first iteration - nt1 in spreadsheet
+          df = Math.abs( jStat.chisquare.inv(gamma, N) ) - 1;
+          cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+          N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+          if (N < 3) N = 3;
 
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: parseInt(N) } )
+
+          for (let i = 1; i < 9; i += 1) {
+            df = N - 1;
+            //df = Math.max( Math.min( Math.ceil(N) - 1, N + 1), N - 1);
+
+            cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+            N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+            if (N < 4) N = 4;  //is this a fiddle?
+            if (N < minN) minN = N;
+          }
+  
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(minN) } )    
+   
         }
       }
     }
@@ -695,8 +658,7 @@ $(function() {
     if (tab === 'Unpaired') {
       if (ncurveudavg) {  //if average
         //the z line
-        svgD.append('path').attr('class', 'Nline').attr('d', line(Nlinez)).attr('stroke', 'blue').attr('stroke-width', 2).attr('fill', 'none');
-
+        //svgD.append('path').attr('class', 'Nline').attr('d', line(Nlinez)).attr('stroke', 'blue').attr('stroke-width', 2).attr('fill', 'none');
         svgD.append('path').attr('class', 'Nline').attr('d', line(Nline)).attr('stroke', 'black').attr('stroke-width', 2).attr('fill', 'none');
       }
       if (ncurveudass) {  //if assurance
@@ -723,11 +685,16 @@ $(function() {
         if (parseInt(1000 * value.fmoe) % 50 === 0) {
           svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
           //don't draw if intersection with targetmoe as already drawn in bold
-          if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+          if (Math.abs(targetmoe -value.fmoe) > 0.01) {
+            //draw a blank box
+            svgD.append('rect').attr('class', 'Nlinetextbox').attr('x', x(value.fmoe) - 10 ).attr('y', y(value.N) + 6 ).attr('width', 20 ).attr('height', 16 ).attr('stroke', 0).attr('fill', 'white');
+            svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) - 10 ).attr('y', y(value.N) + 20 ).attr('text-anchor', 'start').attr('fill', 'black');
+          }
         }
 
       })
 
+      //make grey
       if (ncurveudass) {
         d3.selectAll('.Nline').attr('stroke', 'lightgray');   
         d3.selectAll('.Nlinetext').attr('stroke', 'lightgray').attr('fill', 'lightgray');        
@@ -751,10 +718,15 @@ $(function() {
         if (parseInt(1000 * value.fmoe) % 50 === 0) {
           svgD.append('circle').attr('class', 'Nlinetext').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
           //don't draw if intersection with targetmoe as already drawn in bold
-          if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'black');
+          if (Math.abs(targetmoe -value.fmoe) > 0.01) {
+            //draw a blank box
+            svgD.append('rect').attr('class', 'Nlinetextbox').attr('x', x(value.fmoe) - 10 ).attr('y', y(value.N) + 6 ).attr('width', 20 ).attr('height', 16 ).attr('stroke', 0).attr('fill', 'white');
+            svgD.append('text').text(value.N).attr('class', 'Nlinetext').attr('x', x(value.fmoe) - 10 ).attr('y', y(value.N) + 20 ).attr('text-anchor', 'start').attr('fill', 'black');
+          }
         }
       })
 
+      //make grey
       if (ncurvepdass) {
         d3.selectAll('.Nline').attr('stroke', 'lightgray');   
         d3.selectAll('.Nlinetext').attr('stroke', 'lightgray').attr('fill', 'lightgray');        
@@ -766,7 +738,7 @@ $(function() {
           if (parseInt(1000 * value.fmoe) % 50 === 0) {
             svgD.append('circle').attr('class', 'NlinetextAss').attr('cx', x(value.fmoe)).attr('cy', y(value.N)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
             //don't draw if intersection with targetmoe as already drawn in bold
-            if (Math.abs(targetmoe -value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'NlinetextAss').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'red');
+            if (Math.abs(targetmoe - value.fmoe) > 0.01) svgD.append('text').text(value.N).attr('class', 'NlinetextAss').attr('x', x(value.fmoe) + 5 ).attr('y', y(value.N) - 7 ).attr('text-anchor', 'start').attr('fill', 'red');
           }
         })
       }
@@ -784,14 +756,14 @@ $(function() {
     d3.selectAll('.targetmoelineblobtext').remove();
 
     //draw vertical line and label
-    svgD.append('line').attr('class', 'targetmoeline').attr('x1', x(targetmoe)).attr('y1', y(0)).attr('x2', x(targetmoe)).attr('y2', y(maxN)).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'none');
-    svgD.append('text').text('Target MoE').attr('class', 'targetmoelinetext').attr('x', x(targetmoe) - 35 ).attr('y', y(maxN)-18).attr('text-anchor', 'start').attr('fill', 'black');
+    svgD.append('line').attr('class', 'targetmoeline').attr('x1', x(targetmoe)).attr('y1', y(0)).attr('x2', x(targetmoe)).attr('y2', y(maxN)).attr('stroke', 'firebrick').attr('stroke-width', 3).attr('fill', 'none');
+    svgD.append('text').text('Target MoE').attr('class', 'targetmoelinetext').attr('x', x(targetmoe) - 40 ).attr('y', y(maxN)-20).attr('text-anchor', 'start').attr('fill', 'firebrick').attr('font-size', '1.8rem');
 
   
     //find the N for that fmoe value from the Nline data array of objects (probably a functional way, but hey this works)
     if (tab === 'Unpaired' && ncurveudavg) {
       for (let i = 0; i < Nline.length; i += 1) {
-        if (Math.abs(targetmoe - Nline[i].fmoe) < 0.01) {
+        if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
           n = Nline[i].N;
           break;
         }
@@ -800,7 +772,7 @@ $(function() {
 
     if (tab === 'Unpaired' && ncurveudass) {
       for (let i = 0; i < NlineAss.length; i += 1) {
-        if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.01) {
+        if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
           n = NlineAss[i].N;
           break;
         }
@@ -809,7 +781,7 @@ $(function() {
 
     if (tab === 'Paired' && ncurvepdavg) {
       for (let i = 0; i < Nline.length; i += 1) {
-        if (Math.abs(targetmoe - Nline[i].fmoe) < 0.01) {
+        if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
           n = Nline[i].N;
           break;
         }
@@ -818,7 +790,7 @@ $(function() {
 
     if (tab === 'Paired' && ncurvepdass) {
       for (let i = 0; i < NlineAss.length; i += 1) {
-        if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.01) {
+        if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
           n = NlineAss[i].N;
           break;
         }
@@ -828,22 +800,22 @@ $(function() {
     //Now add a blob and value at intersection    
     if (tab === 'Unpaired' && ncurveudavg) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Unpaired' && ncurveudass) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdavg) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdass) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 10 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     //draw a blob and N value at assuranceintersection
