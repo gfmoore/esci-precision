@@ -13,11 +13,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.0.3   21 Oct 2020 #2 More development and trying to figure out calcs!!! :(
 0.0.4   22 Oct 2020 #2 More investigation into formulae, in development.
 0.0.5   23 Oct 2020 #2 Mostly developed except for distribution. Closed.
+0.0.6   23 Oct 2020 #3 First stab at moe distribution curve.
 
 */
 //#endregion 
 
-let version = '0.0.5';
+let version = '0.0.6';
 let test = true;
 
 'use strict';
@@ -41,9 +42,12 @@ $(function() {
   let x;
   let y;
 
-  alphaud = 0.05;  //significance level
-  alphapd = 0.05;
-  gamma = 0.99;    //assurance level of 0.01 but used with right tail for jStat.chisquared.inv 
+  let alphaud = 0.05;  //significance level
+  let alphapd = 0.05;
+  let gamma = 0.99;    //assurance level of 0.01 but used with right tail for jStat.chisquared.inv 
+
+  let fmoemax = 2.005;  
+  let fmoeinc = 0.005;
 
   let svgD;                                                                   //the svg reference to pdfdisplay
  
@@ -255,6 +259,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   }
   
 
@@ -428,6 +433,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   }
 
   function setupAxes() {
@@ -554,14 +560,14 @@ $(function() {
 
     alphaud = parseFloat($CIud.val());
     alphapd = parseFloat($CIpd.val());
-    let fmoemax = 2.005;  //stupid JavaScript rounding on floating point
-    let fmoeinc = 0.005;
+
     
     //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
     if (tab === 'Unpaired') {
 
       //average
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+      
         cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
         N = 2 * (cv/fmoe) * (cv/fmoe);
         if (N < 3) N = 3; //minimum N allowed is 3
@@ -836,6 +842,89 @@ $(function() {
 
   }
 
+  function drawMoECurve() {
+    d3.selectAll('.moecurve').remove();
+
+    let moedist = [];
+    let y;
+    let f;
+    let f2; //(^2/() in Excel)
+    let n;
+    let df;
+    let Rcum;
+
+
+    for (let fmoe = 0; fmoe < fmoemax; fmoe += fmoeinc) {
+
+      //get n for fmoe
+      if (tab === 'Unpaired') {
+        if (ncurveudavg) {
+          for (let i = 0; i < Nline.length; i += 1) {
+            if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
+              n = Nline[i].N;
+              break;
+            }
+          }    
+        }
+
+        if (ncurveudass) {
+          for (let i = 0; i < NlineAss.length; i += 1) {
+            if (Math.abs(fmoe - NlineAss[i].fmoe) < 0.001) {
+              n = NlineAss[i].N;
+              break;
+            }
+          }    
+        }
+
+      }
+      if (tab === 'Paired') {
+        if (ncurvepdavg) {
+          for (let i = 0; i < Nline.length; i += 1) {
+            if (Math.abs(fmoe - Nline[i].fmoe) < 0.001) {
+              n = Nline[i].N;
+              break;
+            }
+          }    
+        }
+
+        if (ncurvepdass) {
+          for (let i = 0; i < NlineAss.length; i += 1) {
+            if (Math.abs(fmoe - NlineAss[i].fmoe) < 0.001) {
+              n = NlineAss[i].N;
+              break;
+            }
+          }
+    
+        }
+      }
+     
+      df = 2*n - 2;
+
+      if (tab === 'Unpaired') f = Math.sqrt( 2 / n) * Math.abs( jStat.studentt.inv( alphaud/2, df));
+      if (tab === 'Paired')   f = Math.sqrt( 2 * (1 - correlationrho) / df) * Math.abs( jStat.studentt.inv( alphapd/2, df));
+
+      f2 = (fmoe * fmoe) / (f * f / df);
+
+      Rcum = 1 - jStat.chisquare.cdf(f2, df);
+
+
+      moedist.push( { fmoe: fmoe.toFixed(3), f2: f2, Rcum: Rcum, ord: 0, N: 0 })
+    }
+    
+    //now scan and obtain the ordinate value
+    let ord;
+    for (let i = 1; i < moedist.length - 1; i += 1) {
+      ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
+      moedist[i].ord = ord;
+      moedist[i].N = 1 * ord;
+
+      //lg(moedist[i].fmoe + ' --> ' + moedist[i].f2 + ' --> ' + moedist[i].Rcum + ' --> ' + moedist[i].ord + ' --> ' + moedist[i].N); 
+    }
+
+    svgD.append('path').attr('class', 'Nline').attr('d', line(moedist)).attr('stroke', 'orange').attr('stroke-width', 2).attr('fill', 'none');
+
+  }
+
   /*---------------------------------------------Tab 1 Panel 2 N Curves radio button-------------------*/
 
   $ncurveudavg.on('change', function() {
@@ -844,6 +933,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   })
 
   $ncurveudass.on('change', function() {
@@ -852,6 +942,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   })
 
   /*---------------------------------------------Tab 1 Panel 3 Display Values checkbox-------------------*/
@@ -861,6 +952,7 @@ $(function() {
     
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   })
 
   /*---------------------------------------------Tab 1 Panel 4 Truncate MoE----------------------------*/
@@ -871,6 +963,7 @@ $(function() {
     alphaud = parseFloat($CIud.val()); 
     drawNline();
     drawTargetMoELine();    
+    drawMoECurve();
   })
 
   /*---------------------------------------------Tab 2 Panel 1 Target MoE------------------------------*/
@@ -883,6 +976,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   })
 
   $ncurvepdass.on('change', function() {
@@ -891,6 +985,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   })
 
   /*---------------------------------------------Tab 2 Panel 4 Display Values checkbox-------------------*/
@@ -900,6 +995,7 @@ $(function() {
 
     drawNline();
     drawTargetMoELine();
+    drawMoECurve();
   })
 
   /*---------------------------------------------Tab 2 Panel 5 Truncate MoE----------------------------*/
@@ -909,7 +1005,8 @@ $(function() {
  $CIpd.on('change', function() {
   alphapd = parseFloat($CIpd.val()); 
   drawNline();
-  drawTargetMoELine();    
+  drawTargetMoELine();  
+  drawMoECurve();  
 })
 
   // #region  -----------------------------------Nudge bars ------------------------------------------------
