@@ -48,6 +48,7 @@ $(function() {
   let alphaud = 0.05;  //significance level
   let alphapd = 0.05;
   let gamma = 0.99;    //assurance level of 0.01 but used with right tail for jStat.chisquared.inv 
+  let df;
 
   let fmoemax = 2.005;  
   let fmoeinc = 0.005;
@@ -619,7 +620,6 @@ $(function() {
       }
 
       //assurance
-      let df;
       if (ncurveudass) {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
           cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
@@ -958,7 +958,7 @@ $(function() {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
 
-      if (ord < 0.2) ord = 0.2;
+      if (ord < 0.1) ord = 0.1;  //just to make the curve not hit the horizontal axis
 
       moedist[i].N = Math.abs(1 * ord);
     }
@@ -1364,4 +1364,6 @@ $(function() {
   }  
 
 })
+
+
 
