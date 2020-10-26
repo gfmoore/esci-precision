@@ -15,11 +15,13 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.0.5   23 Oct 2020 #2 Mostly developed except for distribution. Closed.
 0.0.6   23 Oct 2020 #3 First stab at moe distribution curve.
 0.0.7   26 Oct 2020 #3 Implement the other curves. Need to shade.
+0.0.8   26 Oct 2020 #3 Shade added
 
+0.1.0   26 Oct 2020 Basic dev finished, now start tweaking and checking.
 */
 //#endregion 
 
-let version = '0.0.7';
+let version = '0.1.0';
 let test = true;
 
 'use strict';
@@ -259,8 +261,9 @@ $(function() {
     // #endregion
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
+
   }
   
 
@@ -433,8 +436,8 @@ $(function() {
     }
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   }
 
   function setupAxes() {
@@ -470,6 +473,8 @@ $(function() {
     d3.selectAll('.bottomaxistext').remove();
 
     d3.selectAll('.headertext').remove();
+
+    d3.selectAll('.key').remove();
 
     width   = rwidth - margin.left - margin.right;  
     heightD = $('#display').outerHeight(true) - margin.top - margin.bottom;
@@ -536,6 +541,36 @@ $(function() {
     //      }
     //   }
     // }
+
+    //display key
+
+    //with average
+    if ( (tab === 'Unpaired' && ncurveudavg) || (tab === 'Paired' && ncurvepdavg) ) {
+      svgD.append('circle').attr('class', 'key').attr('cx', 3*width/4 - 20).attr('cy', 145).attr('r', '5').attr('fill', 'black').attr('font-size', '1.4rem').style('font-style', 'italic');
+      svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 145).attr('x2', 3*width/4 + 0 ).attr('y2', 145).attr('stroke', 'black').attr('stroke-width', '3');
+      svgD.append('text').text('N,').attr('class', 'key').attr('x', 3*width/4 +10).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('text').text('for average MoE = target MoE').attr('class', 'key').attr('x', 3*width/4 + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+    }
+
+    //with assurance
+    if ( (tab === 'Unpaired' && ncurveudass) || (tab === 'Paired' && ncurvepdass) ) {
+      svgD.append('circle').attr('class', 'key').attr('cx', 3*width/4 - 20).attr('cy', 120).attr('r', '5').attr('fill', 'red').attr('font-size', '1.4rem').style('font-style', 'italic');
+      svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 120).attr('x2', 3*width/4 + 0 ).attr('y2', 120).attr('stroke', 'red').attr('stroke-width', '3');
+      svgD.append('text').text('N,').attr('class', 'key').attr('x', 3*width/4 +10).attr('y', 125).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('text').text('with assurance').attr('class', 'key').attr('x', 3*width/4 + 40).attr('y', 125).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+
+      // //average with assurance
+      svgD.append('circle').attr('class', 'key').attr('cx', 3*width/4 - 20 ).attr('cy', 145).attr('r', '5').attr('fill', 'lightgray').attr('font-size', '1.4rem').style('font-style', 'italic');
+      svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 145).attr('x2', 3*width/4 + 0 ).attr('y2', 145).attr('stroke', 'lightgray').attr('stroke-width', '3');
+      svgD.append('text').text('N,').attr('class', 'key').attr('x', 3*width/4 + 10).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('text').text('for average MoE = target MoE').attr('class', 'key').attr('x', 3*width/4 + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+    }
+
+    // //MoE distribution
+    svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 170).attr('x2', 3*width/4 + 0 ).attr('y2', 170).attr('stroke', '#993300').attr('stroke-width', '3');
+    svgD.append('text').text('MoE distribution').attr('class', 'key').attr('x', 3*width/4 + 10).attr('y', 175).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+
+    
 
   }
 
@@ -914,25 +949,21 @@ $(function() {
 
       Rcum = 1 - jStat.chisquare.cdf(f2, df);
 
-
       moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), n:n, f:f, f2: f2, Rcum: Rcum, ord: 0, N: 0 })
     }
     
     //now scan and obtain the ordinate value
     let ord;
-    //let maxord = 0;
     for (let i = 1; i < moedist.length - 1; i += 1) {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
-      moedist[i].N = Math.abs(1 * ord);
 
-      //if (moedist[i].ord > maxord) maxord = moedist[i].ord;
-      //lg(moedist[i].fmoe + ' --> ' + moedist[i].f2 + ' --> ' + moedist[i].Rcum + ' --> ' + moedist[i].ord + ' --> ' + moedist[i].N); 
+      if (ord < 0.2) ord = 0.2;
+
+      moedist[i].N = Math.abs(1 * ord);
     }
 
-
-
-     svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', 'orange').attr('stroke-width', 2).attr('fill', 'none');
+     svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', '#993300').attr('stroke-width', 2).attr('fill', '#FFCC99');
 
   }
 
@@ -943,8 +974,8 @@ $(function() {
     ncurveudass = false;
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   })
 
   $ncurveudass.on('change', function() {
@@ -952,8 +983,8 @@ $(function() {
     ncurveudass = true;
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   })
 
   /*---------------------------------------------Tab 1 Panel 3 Display Values checkbox-------------------*/
@@ -962,8 +993,8 @@ $(function() {
     displayvaluesud = $displayvaluesud.is(':checked');
     
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   })
 
   /*---------------------------------------------Tab 1 Panel 4 Truncate MoE----------------------------*/
@@ -973,8 +1004,8 @@ $(function() {
   $CIud.on('change', function() {
     alphaud = parseFloat($CIud.val()); 
     drawNline();
-    drawTargetMoELine();    
     drawMoECurve();
+    drawTargetMoELine();    
   })
 
   /*---------------------------------------------Tab 2 Panel 1 Target MoE------------------------------*/
@@ -986,8 +1017,8 @@ $(function() {
     ncurvepdass = false;
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   })
 
   $ncurvepdass.on('change', function() {
@@ -995,8 +1026,8 @@ $(function() {
     ncurvepdass = true;
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   })
 
   /*---------------------------------------------Tab 2 Panel 4 Display Values checkbox-------------------*/
@@ -1005,8 +1036,8 @@ $(function() {
     displayvaluespd = $displayvaluespd.is(':checked');
 
     drawNline();
-    drawTargetMoELine();
     drawMoECurve();
+    drawTargetMoELine();
   })
 
   /*---------------------------------------------Tab 2 Panel 5 Truncate MoE----------------------------*/
@@ -1016,8 +1047,8 @@ $(function() {
  $CIpd.on('change', function() {
   alphapd = parseFloat($CIpd.val()); 
   drawNline();
-  drawTargetMoELine();  
   drawMoECurve();  
+  drawTargetMoELine();  
 })
 
   // #region  -----------------------------------Nudge bars ------------------------------------------------
