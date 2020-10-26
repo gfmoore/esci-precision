@@ -14,11 +14,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.0.4   22 Oct 2020 #2 More investigation into formulae, in development.
 0.0.5   23 Oct 2020 #2 Mostly developed except for distribution. Closed.
 0.0.6   23 Oct 2020 #3 First stab at moe distribution curve.
+0.0.7   26 Oct 2020 #3 Implement the other curves. Need to shade.
 
 */
 //#endregion 
 
-let version = '0.0.6';
+let version = '0.0.7';
 let test = true;
 
 'use strict';
@@ -209,8 +210,8 @@ $(function() {
     //pdf display
     svgD = d3.select('#display').append('svg').attr('width', '100%').attr('height', '100%');
 
-    $ciud.text(0.25);
-    $cipd.text(0.25);
+    $ciud.text(0.4);
+    $cipd.text(0.4);
 
     setupSliders();
     clear();
@@ -615,7 +616,7 @@ $(function() {
         if (N < 3) N = 3; //minimum N allowed is 3
 
         //now iterate on t 9 times   At times, when N gets to about 3 the N starts oscillating, pick the lowest
-        minN = 999;
+        minN = 999999;
         for (let i = 0; i < 9; i += 1) {
           cv = Math.abs(jStat.studentt.inv( alphapd/2, N - 1 ));
           N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
@@ -629,7 +630,7 @@ $(function() {
 
       //assurance
       if (ncurvepdass) {
-        minN = 999;   //have to put this here to stop oscillations
+        minN = 999999;   //have to put this here to stop oscillations
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
           cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
           N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
@@ -869,7 +870,7 @@ $(function() {
 
         if (ncurveudass) {
           for (let i = 0; i < NlineAss.length; i += 1) {
-            if (Math.abs(fmoe - NlineAss[i].fmoe) < 0.001) {
+            if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
               n = NlineAss[i].N;
               break;
             }
@@ -880,7 +881,7 @@ $(function() {
       if (tab === 'Paired') {
         if (ncurvepdavg) {
           for (let i = 0; i < Nline.length; i += 1) {
-            if (Math.abs(fmoe - Nline[i].fmoe) < 0.001) {
+            if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
               n = Nline[i].N;
               break;
             }
@@ -889,7 +890,7 @@ $(function() {
 
         if (ncurvepdass) {
           for (let i = 0; i < NlineAss.length; i += 1) {
-            if (Math.abs(fmoe - NlineAss[i].fmoe) < 0.001) {
+            if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
               n = NlineAss[i].N;
               break;
             }
@@ -898,30 +899,40 @@ $(function() {
         }
       }
      
-      df = 2*n - 2;
+     
 
-      if (tab === 'Unpaired') f = Math.sqrt( 2 / n) * Math.abs( jStat.studentt.inv( alphaud/2, df));
-      if (tab === 'Paired')   f = Math.sqrt( 2 * (1 - correlationrho) / df) * Math.abs( jStat.studentt.inv( alphapd/2, df));
 
+      if (tab === 'Unpaired') {
+        df = 2*n - 2;
+        f = Math.sqrt( 2 / n) * Math.abs( jStat.studentt.inv( alphaud/2, df));
+      }
+      if (tab === 'Paired') {
+        df = n - 1;
+        f = Math.sqrt( 2 * (1 - correlationrho) / n) * Math.abs( jStat.studentt.inv( alphapd/2, df));
+      }
       f2 = (fmoe * fmoe) / (f * f / df);
 
       Rcum = 1 - jStat.chisquare.cdf(f2, df);
 
 
-      moedist.push( { fmoe: fmoe.toFixed(3), f2: f2, Rcum: Rcum, ord: 0, N: 0 })
+      moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), n:n, f:f, f2: f2, Rcum: Rcum, ord: 0, N: 0 })
     }
     
     //now scan and obtain the ordinate value
     let ord;
+    //let maxord = 0;
     for (let i = 1; i < moedist.length - 1; i += 1) {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
-      moedist[i].N = 1 * ord;
+      moedist[i].N = Math.abs(1 * ord);
 
+      //if (moedist[i].ord > maxord) maxord = moedist[i].ord;
       //lg(moedist[i].fmoe + ' --> ' + moedist[i].f2 + ' --> ' + moedist[i].Rcum + ' --> ' + moedist[i].ord + ' --> ' + moedist[i].N); 
     }
 
-    svgD.append('path').attr('class', 'Nline').attr('d', line(moedist)).attr('stroke', 'orange').attr('stroke-width', 2).attr('fill', 'none');
+
+
+     svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', 'orange').attr('stroke-width', 2).attr('fill', 'none');
 
   }
 
