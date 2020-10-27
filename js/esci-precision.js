@@ -18,10 +18,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.0.8   26 Oct 2020 #3 Shade added
 
 0.1.0   26 Oct 2020 Basic dev finished, now start tweaking and checking.
+0.1.1   27 Oct 2020 #7 Made sliders work as required and fixed inconsistency.
+
 */
 //#endregion 
 
-let version = '0.1.0';
+let version = '0.1.1';
 let test = true;
 
 'use strict';
@@ -261,6 +263,21 @@ $(function() {
     })    
     // #endregion
 
+    //sort out target moe and relation to truncate display when switching between tabs
+    if (tab === 'Unpaired') {
+      if (targetmoe < truncatedisplayud) {
+        targetmoe = truncatedisplayud;
+        updatetargetmoeslider();
+      }
+    }
+
+    if (tab === 'Paired') {
+      if (targetmoe < truncatedisplaypd) {
+        targetmoe = truncatedisplaypd;
+        updatetargetmoeslider();
+      }      
+    }
+
     drawNline();
     drawMoECurve();
     drawTargetMoELine();
@@ -334,12 +351,35 @@ $(function() {
           $truncatedisplayudslider.update({ from: truncatedisplayud });
         }
         sliderinuse = true;  //don't update slider in redrawDisplay()
-        targetmoe = truncatedisplayud;
-        updatetargetmoeslider();
         redrawDisplay();
       }
     })
     $truncatedisplayudslider = $('#truncatedisplayudslider').data("ionRangeSlider");
+
+    $('#truncatedisplaypdslider').ionRangeSlider({
+      skin: 'big',
+      grid: true,
+      grid_num: 4,
+      type: 'single',
+      min: 0.05,
+      max: 0.3,
+      from: 0.25,
+      step: 0.05,
+      prettify: prettify2,
+      //on slider handles change
+      onChange: function (data) {
+        truncatedisplaypd = data.from;
+        if (truncatedisplaypd < 0.05) {
+          truncatedisplaypd = 0.05;
+          $truncatedisplaypdslider.update({ from: truncatedisplaypd });
+        }
+        sliderinuse = true;  //don't update slider
+        redrawDisplay();
+      }
+    })
+    $truncatedisplaypdslider = $('#truncatedisplaypdslider').data("ionRangeSlider");
+
+
 
     $('#correlationrhoslider').ionRangeSlider({
       skin: 'big',
@@ -364,28 +404,6 @@ $(function() {
     })
     $correlationrhoslider = $('#correlationrhoslider').data("ionRangeSlider");
 
-    $('#truncatedisplaypdslider').ionRangeSlider({
-      skin: 'big',
-      grid: true,
-      grid_num: 4,
-      type: 'single',
-      min: 0.05,
-      max: 0.3,
-      from: 0.25,
-      step: 0.05,
-      prettify: prettify2,
-      //on slider handles change
-      onChange: function (data) {
-        truncatedisplaypd = data.from;
-        if (truncatedisplaypd < 0.05) {
-          truncatedisplaypd = 0.05;
-          $truncatedisplaypdslider.update({ from: truncatedisplaypd });
-        }
-        sliderinuse = true;  //don't update slider
-        redrawDisplay();
-      }
-    })
-    $truncatedisplaypdslider = $('#truncatedisplaypdslider').data("ionRangeSlider");
 
 
     function prettify0(n) {
