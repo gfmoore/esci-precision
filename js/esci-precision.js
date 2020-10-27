@@ -39,16 +39,8 @@ $(function() {
   let tab                     = 'Unpaired';                                   //what tab?
 
   const display               = document.querySelector('#display');           //display of pdf area
+  let svgD;
 
-  let maxN = 800;
-  let maxn = 0;
-  let minN = 0;
-
-  let Nmin = 0;
-  let Nmax = 0;
-  let N0, Nt, dfeven, dfodd, dfmax;
-  
-  
   let margin                  = {top: 0, right: 30, bottom: 0, left: 70};     //margins for  display area
   let width;                                                                  //the true width of thedisplay area in pixels
   let heightD;   
@@ -58,19 +50,26 @@ $(function() {
   let x;
   let y;
 
+  let Nline = [];
+  let NlineAss = [];
+
   let alphaud = 0.05;  //significance level
   let alphapd = 0.05;
   let gamma = 0.99;    //assurance level of 0.01 but used with right tail for jStat.chisquared.inv 
+ 
+  let N;
+  let maxN;
+  let Nz;
+  let Nt;
+
   let df;
+  let dfeven;
+  let dfodd;
+  let dfmax;
 
   let fmoemax = 2.005;  
   let fmoeinc = 0.005;
 
-  let svgD;                                                                   //the svg reference to pdfdisplay
- 
-  let Nlinez = [];
-  let Nline = [];
-  let NlineAss = [];
 
   let $targetmoeslider                 = $('#targetmoeslider');
   const $targetmoenudgebackward        = $('#targetmoenudgebackward');
@@ -602,15 +601,11 @@ $(function() {
   }
 
   function drawNline() {
-    //get the current values
-
     let cv; //critical value
-    //Nlinez = [];
+
     Nline = [];
     NlineAss = [];
-    let N;
-    //let oldN;
-    //maxN = 0;    //get maximum y (N) value
+
 
     d3.selectAll('.Nline').remove();
     d3.selectAll('.NlineAss').remove();
@@ -619,7 +614,6 @@ $(function() {
     d3.selectAll('.Nlinetextbox').remove();
 
     d3.selectAll('.NlinetextAss').remove();
-    //d3.selectAll('.NlinetextAssbox').remove();
 
     alphaud = parseFloat($CIud.val());
     alphapd = parseFloat($CIpd.val());
@@ -632,10 +626,10 @@ $(function() {
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
       
         cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-        N0 = Math.ceil(2 * (cv/fmoe)**2);
-        if (N0 < 3) N0 = 3; //minimum N allowed is 3
+        Nz = Math.ceil(2 * (cv/fmoe)**2);
+        if (Nz < 3) Nz = 3; //minimum N allowed is 3
 
-        df = 2*N0-2;
+        df = 2*Nz-2;
         cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
         Nt =  Math.ceil(2 * (cv/fmoe)**2);
 
@@ -664,10 +658,10 @@ $(function() {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
           cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-          N0 = 2 * (cv/fmoe)**2;
+          Nz = 2 * (cv/fmoe)**2;
   
           //first iteration - nt1 in spreadsheet
-          df = 2 * Math.ceil( N0 * jStat.chisquare.inv(gamma, Math.floor(N0)) / Math.floor(N0) - 1);  //bit concerned whether this should be floor?
+          df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
           cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
           Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
           if (Nt < 3) Nt = 3;
@@ -697,10 +691,10 @@ $(function() {
       //average
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
         cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-        N0 = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
-        if (N0 < 3) N0 = 3; //minimum N allowed is 3
+        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
+        if (Nz < 3) Nz = 3; //minimum N allowed is 3
 
-        df = N0-1;
+        df = Nz-1;
         cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
         Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
  
@@ -727,11 +721,11 @@ $(function() {
       if (ncurvepdass) {
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
           cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-          N0 = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
-          if (N0 < 3) N0 = 3; //minimum N allowed is 3
+          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+          if (Nz < 3) Nz = 3; //minimum N allowed is 3
   
           //first iteration - nt1 in spreadsheet
-          df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, N0) ) - 1 );
+          df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
           cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
           Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
 
