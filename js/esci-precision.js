@@ -19,11 +19,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
 0.1.0   26 Oct 2020 Basic dev finished, now start tweaking and checking.
 0.1.1   27 Oct 2020 #7 Made sliders work as required and fixed inconsistency.
+0.1.2   27 Oct 2020 #6 Changed assurance calcs - using weird df calcs.
 
 */
 //#endregion 
 
-let version = '0.1.1';
+let version = '0.1.2';
 let test = true;
 
 'use strict';
@@ -38,6 +39,13 @@ $(function() {
   const display               = document.querySelector('#display');        //display of pdf area
 
   let maxN = 800;
+  let maxn = 0;
+  let minN = 0;
+
+  let Nmin = 0;
+  let Nmax = 0;
+  
+  
   let margin                  = {top: 0, right: 30, bottom: 0, left: 70};     //margins for  display area
   let width;                                                                  //the true width of thedisplay area in pixels
   let heightD;   
@@ -379,8 +387,6 @@ $(function() {
     })
     $truncatedisplaypdslider = $('#truncatedisplaypdslider').data("ionRangeSlider");
 
-
-
     $('#correlationrhoslider').ionRangeSlider({
       skin: 'big',
       grid: true,
@@ -403,7 +409,6 @@ $(function() {
       }
     })
     $correlationrhoslider = $('#correlationrhoslider').data("ionRangeSlider");
-
 
 
     function prettify0(n) {
@@ -663,51 +668,64 @@ $(function() {
 
     if (tab === 'Paired') {
       //average
+      let N0, Nt, dfeven, dfodd, dfmax;
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
         cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-        N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
-        if (N < 3) N = 3; //minimum N allowed is 3
+        N0 = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe)); 
+        if (N0 < 3) N0 = 3; //minimum N allowed is 3
 
-        //now iterate on t 9 times   At times, when N gets to about 3 the N starts oscillating, pick the lowest
-        minN = 999999;
-        for (let i = 0; i < 9; i += 1) {
-          cv = Math.abs(jStat.studentt.inv( alphapd/2, N - 1 ));
-          N =  2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
+        df = N0-1;
+        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+        Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+ 
+        //iterate for df2 and Nt2 etc
+        for (let i = 2; i <= 9; i += 1) {
+          df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
 
-          if (N < 3) N = 3;
-          if (N < minN) minN = N;
+          cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+          Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+
+          //get local max min for oscillating values
+          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+          else             dfodd  = df;
         }
 
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(minN) } );   
+        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+        if (dfmax < 2) dfmax = 2;
+        
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
+
       }
 
       //assurance
       if (ncurvepdass) {
-        minN = 999999;   //have to put this here to stop oscillations
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
           cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-          N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
-          if (N < 3) N = 3; //minimum N allowed is 3
+          N0 = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe);
+          if (N0 < 3) N0 = 3; //minimum N allowed is 3
   
           //first iteration - nt1 in spreadsheet
-          df = Math.abs( jStat.chisquare.inv(gamma, N) ) - 1;
+          df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, N0) ) - 1 );
           cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-          N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-          if (N < 3) N = 3;
+          Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
 
-
-          for (let i = 1; i < 9; i += 1) {
-            df = N - 1;
-            //df = Math.max( Math.min( Math.ceil(N) - 1, N + 1), N - 1);
+          //iterate for df2 and Nt2 etc        
+          for (let i = 2; i < 9; i += 1) {
+            //df = N - 1;
+            df = Math.max(Math.min(Nt-1, df+1), df-1);
 
             cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-            N = 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-            if (N < 4) N = 4;  //is this a fiddle?
-            if (N < minN) minN = N;
+            Nt = Math.ceil( 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
+
+            //get local max min for oscillating values
+            if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+            else             dfodd  = df;
           }
   
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Math.ceil(minN) } )    
-   
+          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+          if (dfmax < 2) dfmax = 2;
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
         }
       }
     }
