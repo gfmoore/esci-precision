@@ -1,6 +1,6 @@
 # esci-precision for planning
 
-## Current version 0.1.5
+## Current version 0.1.6
 
 This is a JavaScript implementation of the esci software (Exploratory Software for Confidence Intervals) that accompanies: 
 

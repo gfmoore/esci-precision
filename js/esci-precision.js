@@ -23,11 +23,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.3   27 Oct 2020 #6 Changed calcs (Independent Groups) - as per Excel calcs
 0.1.4   28 Oct 2020 #6 Added a missed maximum to dt for Paired assurance calcs, Added temp radio button for type of calc
 0.1.5   28 Oct 2020 #6 Added iteration calcs for average, not assurance
+0.1.6   28 Oct 2020 #6 Added iteration for assurance and fixed error in paired average.
 
 */
 //#endregion 
 
-let version = '0.1.5';
+let version = '0.1.6';
 let test = true;
 
 'use strict';
@@ -825,13 +826,13 @@ $(function() {
 
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
           cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+          Nz = Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2);
           if (Nz < 3) Nz = 3; //minimum N allowed is 3
   
           //first iteration - nt1 in spreadsheet
           df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
           cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-          Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
+          Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
           if (Nt < 3) Nt = 3;
 
           //iterate for df2 and Nt2 etc        
@@ -840,7 +841,7 @@ $(function() {
             df = Math.min(Math.ceil(Nt)-1, df+1);
 
             cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-            Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
+            Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
             if (Nt < 3) Nt = 3;
 
             //get local max min for oscillating values
@@ -867,7 +868,7 @@ $(function() {
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
         Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
-        f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/2);
+        f = Math.abs(jStat.studentt.inv( alphaud/2, 2*Nt-2 )) / Math.sqrt(Nt/2);
 
         while (f > fmoe) {
           Nt += 1;
@@ -881,17 +882,11 @@ $(function() {
       if (ncurveudass) {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
           Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
-          //df = 2 * Math.ceil( Nt * jStat.chisquare.inv(gamma, Math.floor(Nt)) / Math.floor(Nt) - 1);
-          //df = 2 * Nt * jStat.chisquare.inv(gamma, Nt-1 ) / (Nt - 1);
-          df = 2*Nt - 2;
-          f = 2 *  Math.abs(jStat.studentt.inv( alphaud/2, df )) / (Math.sqrt(Nt / (jStat.chisquare.inv(gamma, df) / df) ));
-  
+          f = Math.abs( jStat.studentt.inv( alphaud/2, 2*Nt - 2 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( jStat.chisquare.inv(gamma, 2*Nt - 2))  )) ;
+
           while (f > fmoe) {
             Nt += 1;
-            //df = 2 * Math.ceil( Nt * jStat.chisquare.inv(gamma, Math.floor(Nt)) / Math.floor(Nt) - 1);
-            df = 2*Nt - 2;
-            //df = 2 * Nt * jStat.chisquare.inv(gamma, Nt ) / (Nt - 1);            
-            f = 2 * Math.abs(jStat.studentt.inv( alphaud/2, df )) / (Math.sqrt( Nt/(jStat.chisquare.inv(gamma, df) / df) ));
+            f = Math.abs( jStat.studentt.inv( alphaud/2, 2*Nt - 2 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( jStat.chisquare.inv(gamma, 2*Nt - 2))  )) ;
           }
     
           NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} );   
@@ -903,7 +898,7 @@ $(function() {
       //average
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+        Nt = Math.max(Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2), 3);
         f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/2);
 
         while (f > fmoe) {
@@ -917,9 +912,14 @@ $(function() {
       //assurance
       if (ncurvepdass) {
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
-  
+          Nt = Math.max(Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2), 3);
+          f = Math.abs( jStat.studentt.inv( alphaud/2, Nt - 1 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( 2*(1-correlationrho) * jStat.chisquare.inv(gamma, Nt - 1))  )) ;
 
+          while (f > fmoe) {
+            Nt += 1;
+            f = Math.abs( jStat.studentt.inv( alphaud/2, Nt - 1 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( 2*(1-correlationrho) * jStat.chisquare.inv(gamma, Nt - 1))  )) ;
+          }
+  
           NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } )    
         }
       }
