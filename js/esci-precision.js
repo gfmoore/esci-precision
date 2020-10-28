@@ -22,12 +22,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.2   27 Oct 2020 #6 Changed assurance calcs (paired) - using weird df calcs.
 0.1.3   27 Oct 2020 #6 Changed calcs (Independent Groups) - as per Excel calcs
 0.1.4   28 Oct 2020 #6 Added a missed maximum to dt for Paired assurance calcs, Added temp radio button for type of calc
-
+0.1.5   28 Oct 2020 #6 Added iteration calcs for average, not assurance
 
 */
 //#endregion 
 
-let version = '0.1.4';
+let version = '0.1.5';
 let test = true;
 
 'use strict';
@@ -859,12 +859,20 @@ $(function() {
   }
 
   function calcWithIterate() {
+    let f;
     cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
 
     if (tab === 'Unpaired') {
       //average
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        Nz = Math.ceil(2 * (cv/fmoe)**2);
+
+        Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+        f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/2);
+
+        while (f > fmoe) {
+          Nt += 1;
+          f = Math.abs(jStat.studentt.inv( alphaud/2, 2*Nt-2 )) / Math.sqrt(Nt/2);
+        }
 
         Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
       }
@@ -872,9 +880,21 @@ $(function() {
       //assurance
       if (ncurveudass) {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-          Nz = Math.ceil(2 * (cv/fmoe)**2);
+          Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+          //df = 2 * Math.ceil( Nt * jStat.chisquare.inv(gamma, Math.floor(Nt)) / Math.floor(Nt) - 1);
+          //df = 2 * Nt * jStat.chisquare.inv(gamma, Nt-1 ) / (Nt - 1);
+          df = 2*Nt - 2;
+          f = 2 *  Math.abs(jStat.studentt.inv( alphaud/2, df )) / (Math.sqrt(Nt / (jStat.chisquare.inv(gamma, df) / df) ));
   
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
+          while (f > fmoe) {
+            Nt += 1;
+            //df = 2 * Math.ceil( Nt * jStat.chisquare.inv(gamma, Math.floor(Nt)) / Math.floor(Nt) - 1);
+            df = 2*Nt - 2;
+            //df = 2 * Nt * jStat.chisquare.inv(gamma, Nt ) / (Nt - 1);            
+            f = 2 * Math.abs(jStat.studentt.inv( alphaud/2, df )) / (Math.sqrt( Nt/(jStat.chisquare.inv(gamma, df) / df) ));
+          }
+    
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} );   
         }
       }
     }
@@ -882,9 +902,15 @@ $(function() {
     if (tab === 'Paired') {
       //average
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
 
-         
+        Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+        f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/2);
+
+        while (f > fmoe) {
+          Nt += 1;
+          f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/(2 * (1 - correlationrho)));
+        }
+ 
         Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
       }
 
@@ -1128,7 +1154,7 @@ $(function() {
   }
 
 
-
+  //test radio buttons
   $('input[type=radio][name=calctype').change(function() {
     if (this.value === 'excel') {
       calctype = 'excel';
