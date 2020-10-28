@@ -24,11 +24,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.4   28 Oct 2020 #6 Added a missed maximum to dt for Paired assurance calcs, Added temp radio button for type of calc
 0.1.5   28 Oct 2020 #6 Added iteration calcs for average, not assurance
 0.1.6   28 Oct 2020 #6 Added iteration for assurance and fixed error in paired average.
+0.1.7   28 Oct 2020 #6 Added sledgehammer code - so slow to start now.
 
 */
 //#endregion 
 
-let version = '0.1.6';
+let version = '0.1.7';
 let test = true;
 
 'use strict';
@@ -156,6 +157,11 @@ $(function() {
    
   let calctype = 'excel';
 
+  let sledgeunpairerdavg = [];
+  let sledgeunpairerdass = [];
+  let sledgepairerdavg = [];
+  let sledgepairerdass= [];
+
   //#endregion
 
   //breadcrumbs
@@ -175,6 +181,8 @@ $(function() {
 
       $CIsectionud.hide();
       $CIsectionpd.hide();
+
+      setupSledgehammer();
     }
 
     //tab switching
@@ -933,8 +941,10 @@ $(function() {
     if (tab === 'Unpaired') {
       //average
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-        Nz = Math.ceil(2 * (cv/fmoe)**2);
 
+        fmoe = parseFloat(fmoe.toFixed(5));
+        correlationrho = parseFloat(correlationrho.toFixed(3));
+        Nt = searchfunpairedavg(correlationrho, fmoe);  
 
         Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
       }
@@ -942,8 +952,10 @@ $(function() {
       //assurance
       if (ncurveudass) {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-          Nz = 2 * (cv/fmoe)**2;
-  
+
+          fmoe = parseFloat(fmoe.toFixed(5));
+          correlationrho = parseFloat(correlationrho.toFixed(3));
+          Nt = searchfunpairedass(correlationrho, fmoe);  
 
           NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
         }
@@ -953,9 +965,11 @@ $(function() {
     if (tab === 'Paired') {
       //average
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
-        
+
+        fmoe = parseFloat(fmoe.toFixed(5));
+        correlationrho = parseFloat(correlationrho.toFixed(3));
+        Nt = searchfpairedavg(correlationrho, fmoe);  
+
         Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
 
       }
@@ -963,16 +977,131 @@ $(function() {
       //assurance
       if (ncurvepdass) {
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-          cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
 
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } )    
+          fmoe = parseFloat(fmoe.toFixed(5));
+          correlationrho = parseFloat(correlationrho.toFixed(3));
+          
+          Nt = searchfpairedass(correlationrho, fmoe);  
+
+          NlineAss.push( { fmoe: fmoe, N: Nt } )    
         }
       }
     }
 
   }
 
+  function searchfunpairedavg(rho, f) {
+
+    let i;
+    for (i=0; i<sledgeunpairedavg.length; i++) {
+      if (sledgeunpairedavg[i].rho === rho) {
+        if (sledgeunpairedavg[i].f < f) {
+          break;
+        }
+      }
+    }
+    if ( i === sledgeunpairedavg.length ) return 3;  //couldn't find one
+    if (i === 0) return 3; //the first entry can't have a previous rho
+    if (sledgeunpairedavg[i].rho !== rho) return 3;  //went back beyond current rho
+    return sledgeunpairedavg[i].N;
+  }
+
+  function searchfunpairedass(rho, f) {
+
+    let i;
+    for (i=0; i<sledgeunpairedass.length; i++) {
+      if (sledgeunpairedass[i].rho === rho) {
+        if (sledgeunpairedass[i].f < f) {
+          break;
+        }
+      }
+    }
+    if ( i === sledgeunpairedass.length ) return 3;  //couldn't find one
+    if (i === 0) return 3; //the first entry can't have a previous rho
+    if (sledgeunpairedass[i].rho !== rho) return 3;  //went back beyond current rho
+    return sledgeunpairedass[i].N;
+  }
+
+  function searchfpairedavg(rho, f) {
+    // o = sledge.find(obj => obj.rho === rho && Math.abs(obj.f - f) < 0.001);
+    // if (o == null) return 3; //lg(`rho -->  ${rho}  f --> ${f}`);
+    // else return o.N;
+
+    let i;
+    for (i=0; i<sledgepairedavg.length; i++) {
+      if (sledgepairedavg[i].rho === rho) {
+        if (sledgepairedavg[i].f < f) {
+          break;
+        }
+      }
+    }
+    if ( i === sledgepairedavg.length ) return 3;  //couldn't find one
+    if (i === 0) return 3; //the first entry can't have a previous rho
+    if (sledgepairedavg[i].rho !== rho) return 3;  //went back beyond current rho
+    return sledgepairedavg[i].N;
+  }
+
+  function searchfpairedass(rho, f) {
+
+    let i;
+    for (i=0; i<sledgepairedass.length; i++) {
+      if (sledgepairedass[i].rho === rho) {
+        if (sledgepairedass[i].f < f) {
+          break;
+        }
+      }
+    }
+    if ( i === sledgepairedass.length ) return 3;  //couldn't find one
+    if (i === 0) return 3; //the first entry can't have a previous rho
+    if (sledgepairedass[i].rho !== rho) return 3;  //went back beyond current rho
+    return sledgepairedass[i].N;
+  }
+
+  function setupSledgehammer() {
+    sledgeunpairedavg = [];
+    sledgeunpairedass = [];
+    sledgepairedavg = [];
+    sledgepairedass = [];
+
+    //Unpaired average
+    for (let rho = 0; rho < 1; rho += 0.01) {
+      for (let N = 3; N <= 3300; N += 1 ) {
+        f = Math.abs( jStat.studentt.inv( alphapd/2, 2*N-2 )) / Math.sqrt( N / 2 );
+        
+        sledgeunpairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+      }
+    }
+
+    //Unpaired assurance
+    for (let rho = 0; rho < 1; rho += 0.01) {
+      for (let N = 3; N <= 3300; N += 1 ) {
+        f = Math.abs( jStat.studentt.inv( alphaud/2, 2*N - 2 ) ) / (Math.sqrt( N * (N - 1) / ( jStat.chisquare.inv(gamma, 2*N - 2))  )) ;
+
+        sledgeunpairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+      }
+    }
+
+
+    //Paired average
+    for (let rho = 0; rho < 1; rho += 0.01) {
+      for (let N = 3; N <= 3300; N += 1 ) {
+        f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N / (2*(1-rho)) );
+        
+        sledgepairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+      }
+    }
+
+    //Paired assurance
+    for (let rho = 0; rho < 1; rho += 0.01) {
+      for (let N = 3; N <= 3300; N += 1 ) {
+        f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N * (N-1) / (2*(1-rho) * jStat.chisquare.inv(gamma, N-1)) );
+        
+        sledgepairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+      }
+    }
+
+
+  }
 
   function drawTargetMoELine() {
 
