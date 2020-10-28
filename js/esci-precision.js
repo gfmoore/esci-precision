@@ -21,12 +21,13 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.1   27 Oct 2020 #7 Made sliders work as required and fixed inconsistency.
 0.1.2   27 Oct 2020 #6 Changed assurance calcs (paired) - using weird df calcs.
 0.1.3   27 Oct 2020 #6 Changed calcs (Independent Groups) - as per Excel calcs
+0.1.4   28 Oct 2020 #6 Added a missed maximum to dt for Paired assurance calcs, Added temp radio button for type of calc
 
 
 */
 //#endregion 
 
-let version = '0.1.3';
+let version = '0.1.4';
 let test = true;
 
 'use strict';
@@ -152,6 +153,7 @@ $(function() {
   const $CIsectionpd = $('#CIsectionpd');
   const $CIpd = $('#CIpd');
    
+  let calctype = 'excel';
 
   //#endregion
 
@@ -618,137 +620,9 @@ $(function() {
     alphaud = parseFloat($CIud.val());
     alphapd = parseFloat($CIpd.val());
 
-    
-    //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
-    if (tab === 'Unpaired') {
-
-      //average
-      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-      
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-        Nz = Math.ceil(2 * (cv/fmoe)**2);
-        if (Nz < 3) Nz = 3; //minimum N allowed is 3
-
-        df = 2*Nz-2;
-        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-        Nt =  Math.ceil(2 * (cv/fmoe)**2);
-
-        //now iterate  8 more times
-        for (let i = 2; i <= 9; i += 1) {
-          df =Math.max( Math.min(2*Math.ceil(Nt)-2, df+2 ), df-2 );
-
-          cv = Math.abs(jStat.studentt.inv( alphaud/2, df ));
-          Nt = Math.ceil(2 * (cv/fmoe)**2);
-          if (N < 3) N = 3;
-
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;
-        }
-
-        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-        if (dfmax < 2) dfmax = 2;
-        dfmax = (dfmax + 2) / 2;
-
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax } );   
-      }
-
-      //assurance
-      if (ncurveudass) {
-        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-
-          cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-          Nz = 2 * (cv/fmoe)**2;
-  
-          //first iteration - nt1 in spreadsheet
-          df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
-          cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
-          Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-          if (Nt < 3) Nt = 3;
-
-          for (let i = 2; i <= 9; i += 1) {
-            df = Math.min( 2 * Math.ceil(Nt)-2, df+2);
-
-            cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
-            Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-            if (Nt < 3) Nt = 3;
-
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;            
-          }
-  
-          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-          if (dfmax < 2) dfmax = 2;   
-          dfmax = Math.ceil((dfmax + 2) / 2);
-
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax} )    
-        }
-      }
-    }
-
-    if (tab === 'Paired') {
-      //average
-      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
-        if (Nz < 3) Nz = 3; //minimum N allowed is 3
-
-        df = Nz-1;
-        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-        Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
- 
-        //iterate for df2 and Nt2 etc
-        for (let i = 2; i <= 9; i += 1) {
-          df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
-
-          cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-          Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
-
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;
-        }
-
-        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-        if (dfmax < 2) dfmax = 2;
-        
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
-
-      }
-
-      //assurance
-      if (ncurvepdass) {
-        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-          cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
-          if (Nz < 3) Nz = 3; //minimum N allowed is 3
-  
-          //first iteration - nt1 in spreadsheet
-          df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
-          cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-          Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
-
-          //iterate for df2 and Nt2 etc        
-          for (let i = 2; i <= 9; i += 1) {
-            //df = N - 1;
-            df = Math.max(Math.min(Nt-1, df+1), df-1);
-
-            cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-            Nt = Math.ceil( 2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
-
-            //get local max min for oscillating values
-            if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-            else             dfodd  = df;
-          }
-  
-          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-          if (dfmax < 2) dfmax = 2;
-
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
-        }
-      }
-    }
+    if (calctype === 'excel') calcWithExcel();
+    if (calctype === 'iterate') calcWithIterate();
+    if (calctype === 'sledgehammer') calcWithSledgehammer();
 
     //now display the line(s)
     setupAxes();  //have to call this  as will need to redisplay vertical axis as maxN changes
@@ -843,6 +717,236 @@ $(function() {
     }
 
   }
+
+  function calcWithExcel() {
+    //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
+    if (tab === 'Unpaired') {
+      //average
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+      
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+        Nz = Math.ceil(2 * (cv/fmoe)**2);
+        if (Nz < 3) Nz = 3; //minimum N allowed is 3
+
+        df = 2*Nz-2;
+        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+        Nt =  Math.ceil(2 * (cv/fmoe)**2);
+
+        //now iterate  8 more times
+        for (let i = 2; i <= 9; i += 1) {
+          df =Math.max( Math.min(2*Math.ceil(Nt)-2, df+2 ), df-2 );
+
+          cv = Math.abs(jStat.studentt.inv( alphaud/2, df ));
+          Nt = Math.ceil(2 * (cv/fmoe)**2);
+          if (N < 3) N = 3;
+
+          //get local max min for oscillating values
+          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+          else             dfodd  = df;
+        }
+
+        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+        if (dfmax < 2) dfmax = 2;
+        dfmax = (dfmax + 2) / 2;
+
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax } );   
+      }
+
+      //assurance
+      if (ncurveudass) {
+        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+
+          cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+          Nz = 2 * (cv/fmoe)**2;
+  
+          //first iteration - nt1 in spreadsheet
+          df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
+          cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+          Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+          if (Nt < 3) Nt = 3;
+
+          for (let i = 2; i <= 9; i += 1) {
+            df = Math.min( 2 * Math.ceil(Nt)-2, df+2);
+
+            cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+            Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+            if (Nt < 3) Nt = 3;
+
+          //get local max min for oscillating values
+          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+          else             dfodd  = df;            
+          }
+  
+          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+          if (dfmax < 2) dfmax = 2;   
+          dfmax = Math.ceil((dfmax + 2) / 2);
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax} )    
+        }
+      }
+    }
+
+    if (tab === 'Paired') {
+      //average
+      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
+        if (Nz < 3) Nz = 3; //minimum N allowed is 3
+
+        df = Nz-1;
+        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+        Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+
+        //iterate for df2 and Nt2 etc
+        for (let i = 2; i <= 9; i += 1) {
+          df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
+
+          cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+          Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+
+          //get local max min for oscillating values
+          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+          else             dfodd  = df;
+        }
+
+        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+        if (dfmax < 2) dfmax = 2;
+        
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
+
+      }
+
+      //assurance
+      if (ncurvepdass) {
+
+        //test
+        //truncatedisplaypd = 1.4;
+        //correlationrho = 0.9;
+
+        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+          cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+          if (Nz < 3) Nz = 3; //minimum N allowed is 3
+  
+          //first iteration - nt1 in spreadsheet
+          df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
+          cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+          Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
+          if (Nt < 3) Nt = 3;
+
+          //iterate for df2 and Nt2 etc        
+          for (let i = 2; i <= 9; i += 1) {
+
+            df = Math.min(Math.ceil(Nt)-1, df+1);
+
+            cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+            Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
+            if (Nt < 3) Nt = 3;
+
+            //get local max min for oscillating values
+            if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+            else             dfodd  = df;
+          }
+  
+          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+          if (dfmax < 2) dfmax = 2;
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
+        }
+      }
+    }
+
+  }
+
+  function calcWithIterate() {
+    cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+
+    if (tab === 'Unpaired') {
+      //average
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+        Nz = Math.ceil(2 * (cv/fmoe)**2);
+
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+      }
+
+      //assurance
+      if (ncurveudass) {
+        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+          Nz = Math.ceil(2 * (cv/fmoe)**2);
+  
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
+        }
+      }
+    }
+
+    if (tab === 'Paired') {
+      //average
+      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
+
+         
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+      }
+
+      //assurance
+      if (ncurvepdass) {
+        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+  
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } )    
+        }
+      }
+    }
+
+  }
+
+  function calcWithSledgehammer() {
+    cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+
+    if (tab === 'Unpaired') {
+      //average
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+        Nz = Math.ceil(2 * (cv/fmoe)**2);
+
+
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+      }
+
+      //assurance
+      if (ncurveudass) {
+        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+          Nz = 2 * (cv/fmoe)**2;
+  
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
+        }
+      }
+    }
+
+    if (tab === 'Paired') {
+      //average
+      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
+        
+        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+
+      }
+
+      //assurance
+      if (ncurvepdass) {
+        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+          cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+          Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } )    
+        }
+      }
+    }
+
+  }
+
 
   function drawTargetMoELine() {
 
@@ -1022,6 +1126,26 @@ $(function() {
      svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', '#993300').attr('stroke-width', 2).attr('fill', '#FFCC99');
 
   }
+
+
+
+  $('input[type=radio][name=calctype').change(function() {
+    if (this.value === 'excel') {
+      calctype = 'excel';
+    }
+    if (this.value === 'iterate') {
+      calctype = 'iterate';
+    }
+    if (this.value === 'sledgehammer') {
+      calctype = 'sledgehammer';
+    }
+
+    drawNline();
+    drawMoECurve();
+    drawTargetMoELine();
+
+  })
+
 
   /*---------------------------------------------Tab 1 Panel 2 N Curves radio button-------------------*/
 
