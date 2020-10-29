@@ -30,7 +30,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 */
 //#endregion 
 
-let version = '0.1.7';
+let version = '0.1.8';
 let test = true;
 
 'use strict';
