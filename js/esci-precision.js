@@ -25,6 +25,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.5   28 Oct 2020 #6 Added iteration calcs for average, not assurance
 0.1.6   28 Oct 2020 #6 Added iteration for assurance and fixed error in paired average.
 0.1.7   28 Oct 2020 #6 Added sledgehammer code - so slow to start now.
+0.1.8   29 Oct 2020 #6 Refined iteration code and commented out Excel and Sledgehammer code
 
 */
 //#endregion 
@@ -155,7 +156,7 @@ $(function() {
   const $CIsectionpd = $('#CIsectionpd');
   const $CIpd = $('#CIpd');
    
-  let calctype = 'excel';
+  let calctype = 'iterate';
 
   let sledgeunpairerdavg = [];
   let sledgeunpairerdass = [];
@@ -727,145 +728,6 @@ $(function() {
 
   }
 
-  function calcWithExcel() {
-    //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
-    if (tab === 'Unpaired') {
-      //average
-      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-      
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-        Nz = Math.ceil(2 * (cv/fmoe)**2);
-        if (Nz < 3) Nz = 3; //minimum N allowed is 3
-
-        df = 2*Nz-2;
-        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-        Nt =  Math.ceil(2 * (cv/fmoe)**2);
-
-        //now iterate  8 more times
-        for (let i = 2; i <= 9; i += 1) {
-          df =Math.max( Math.min(2*Math.ceil(Nt)-2, df+2 ), df-2 );
-
-          cv = Math.abs(jStat.studentt.inv( alphaud/2, df ));
-          Nt = Math.ceil(2 * (cv/fmoe)**2);
-          if (N < 3) N = 3;
-
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;
-        }
-
-        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-        if (dfmax < 2) dfmax = 2;
-        dfmax = (dfmax + 2) / 2;
-
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax } );   
-      }
-
-      //assurance
-      if (ncurveudass) {
-        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-
-          cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-          Nz = 2 * (cv/fmoe)**2;
-  
-          //first iteration - nt1 in spreadsheet
-          df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
-          cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
-          Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-          if (Nt < 3) Nt = 3;
-
-          for (let i = 2; i <= 9; i += 1) {
-            df = Math.min( 2 * Math.ceil(Nt)-2, df+2);
-
-            cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
-            Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-            if (Nt < 3) Nt = 3;
-
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;            
-          }
-  
-          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-          if (dfmax < 2) dfmax = 2;   
-          dfmax = Math.ceil((dfmax + 2) / 2);
-
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax} )    
-        }
-      }
-    }
-
-    if (tab === 'Paired') {
-      //average
-      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-        Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
-        if (Nz < 3) Nz = 3; //minimum N allowed is 3
-
-        df = Nz-1;
-        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-        Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
-
-        //iterate for df2 and Nt2 etc
-        for (let i = 2; i <= 9; i += 1) {
-          df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
-
-          cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-          Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
-
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;
-        }
-
-        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-        if (dfmax < 2) dfmax = 2;
-        
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
-
-      }
-
-      //assurance
-      if (ncurvepdass) {
-
-        //test
-        //truncatedisplaypd = 1.4;
-        //correlationrho = 0.9;
-
-        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-          cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-          Nz = Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2);
-          if (Nz < 3) Nz = 3; //minimum N allowed is 3
-  
-          //first iteration - nt1 in spreadsheet
-          df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
-          cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-          Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
-          if (Nt < 3) Nt = 3;
-
-          //iterate for df2 and Nt2 etc        
-          for (let i = 2; i <= 9; i += 1) {
-
-            df = Math.min(Math.ceil(Nt)-1, df+1);
-
-            cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-            Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
-            if (Nt < 3) Nt = 3;
-
-            //get local max min for oscillating values
-            if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-            else             dfodd  = df;
-          }
-  
-          if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-          if (dfmax < 2) dfmax = 2;
-
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
-        }
-      }
-    }
-
-  }
 
   function calcWithIterate() {
     let f;
@@ -875,12 +737,11 @@ $(function() {
       //average
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
-        f = Math.abs(jStat.studentt.inv( alphaud/2, 2*Nt-2 )) / Math.sqrt(Nt/2);
-
-        while (f > fmoe) {
-          Nt += 1;
+        Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);  //this is N0
+        while (true) {
           f = Math.abs(jStat.studentt.inv( alphaud/2, 2*Nt-2 )) / Math.sqrt(Nt/2);
+          if (f <= fmoe) break;
+          Nt += 1;
         }
 
         Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
@@ -889,14 +750,14 @@ $(function() {
       //assurance
       if (ncurveudass) {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-          Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
-          f = Math.abs( jStat.studentt.inv( alphaud/2, 2*Nt - 2 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( jStat.chisquare.inv(gamma, 2*Nt - 2))  )) ;
-
-          while (f > fmoe) {
-            Nt += 1;
-            f = Math.abs( jStat.studentt.inv( alphaud/2, 2*Nt - 2 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( jStat.chisquare.inv(gamma, 2*Nt - 2))  )) ;
-          }
     
+          Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+          while (true) {
+            f = Math.abs( jStat.studentt.inv( alphaud/2, 2*Nt - 2 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( jStat.chisquare.inv(gamma, 2*Nt - 2))  )) ;
+            if (f <= fmoe) break;
+            Nt += 1;
+          }
+ 
           NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} );   
         }
       }
@@ -907,201 +768,33 @@ $(function() {
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
 
         Nt = Math.max(Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2), 3);
-        f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/2);
-
-        while (f > fmoe) {
+        while (true) {
+          f = Math.abs(jStat.studentt.inv( alphapd/2, Nt-1 )) / Math.sqrt(Nt/(2 * (1 - correlationrho)));
+          if (f <= fmoe) break;
           Nt += 1;
-          f = Math.abs(jStat.studentt.inv( alphaud/2, Nt-1 )) / Math.sqrt(Nt/(2 * (1 - correlationrho)));
         }
- 
+
         Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
       }
 
       //assurance
       if (ncurvepdass) {
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+
           Nt = Math.max(Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2), 3);
-          f = Math.abs( jStat.studentt.inv( alphaud/2, Nt - 1 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( 2*(1-correlationrho) * jStat.chisquare.inv(gamma, Nt - 1))  )) ;
-
-          while (f > fmoe) {
+          while (true) {
+            f = Math.abs( jStat.studentt.inv( alphapd/2, Nt - 1 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( 2*(1-correlationrho) * jStat.chisquare.inv(gamma, Nt - 1)) ));
+            if (f <= fmoe) break;
             Nt += 1;
-            f = Math.abs( jStat.studentt.inv( alphaud/2, Nt - 1 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( 2*(1-correlationrho) * jStat.chisquare.inv(gamma, Nt - 1))  )) ;
           }
-  
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } )    
+
+          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );    
         }
       }
     }
 
   }
 
-  function calcWithSledgehammer() {
-    cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-
-    if (tab === 'Unpaired') {
-      //average
-      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-
-        fmoe = parseFloat(fmoe.toFixed(5));
-        correlationrho = parseFloat(correlationrho.toFixed(3));
-        Nt = searchfunpairedavg(correlationrho, fmoe);  
-
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
-      }
-
-      //assurance
-      if (ncurveudass) {
-        for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
-
-          fmoe = parseFloat(fmoe.toFixed(5));
-          correlationrho = parseFloat(correlationrho.toFixed(3));
-          Nt = searchfunpairedass(correlationrho, fmoe);  
-
-          NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
-        }
-      }
-    }
-
-    if (tab === 'Paired') {
-      //average
-      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-
-        fmoe = parseFloat(fmoe.toFixed(5));
-        correlationrho = parseFloat(correlationrho.toFixed(3));
-        Nt = searchfpairedavg(correlationrho, fmoe);  
-
-        Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
-
-      }
-
-      //assurance
-      if (ncurvepdass) {
-        for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-
-          fmoe = parseFloat(fmoe.toFixed(5));
-          correlationrho = parseFloat(correlationrho.toFixed(3));
-          
-          Nt = searchfpairedass(correlationrho, fmoe);  
-
-          NlineAss.push( { fmoe: fmoe, N: Nt } )    
-        }
-      }
-    }
-
-  }
-
-  function searchfunpairedavg(rho, f) {
-
-    let i;
-    for (i=0; i<sledgeunpairedavg.length; i++) {
-      if (sledgeunpairedavg[i].rho === rho) {
-        if (sledgeunpairedavg[i].f < f) {
-          break;
-        }
-      }
-    }
-    if ( i === sledgeunpairedavg.length ) return 3;  //couldn't find one
-    if (i === 0) return 3; //the first entry can't have a previous rho
-    if (sledgeunpairedavg[i].rho !== rho) return 3;  //went back beyond current rho
-    return sledgeunpairedavg[i].N;
-  }
-
-  function searchfunpairedass(rho, f) {
-
-    let i;
-    for (i=0; i<sledgeunpairedass.length; i++) {
-      if (sledgeunpairedass[i].rho === rho) {
-        if (sledgeunpairedass[i].f < f) {
-          break;
-        }
-      }
-    }
-    if ( i === sledgeunpairedass.length ) return 3;  //couldn't find one
-    if (i === 0) return 3; //the first entry can't have a previous rho
-    if (sledgeunpairedass[i].rho !== rho) return 3;  //went back beyond current rho
-    return sledgeunpairedass[i].N;
-  }
-
-  function searchfpairedavg(rho, f) {
-    // o = sledge.find(obj => obj.rho === rho && Math.abs(obj.f - f) < 0.001);
-    // if (o == null) return 3; //lg(`rho -->  ${rho}  f --> ${f}`);
-    // else return o.N;
-
-    let i;
-    for (i=0; i<sledgepairedavg.length; i++) {
-      if (sledgepairedavg[i].rho === rho) {
-        if (sledgepairedavg[i].f < f) {
-          break;
-        }
-      }
-    }
-    if ( i === sledgepairedavg.length ) return 3;  //couldn't find one
-    if (i === 0) return 3; //the first entry can't have a previous rho
-    if (sledgepairedavg[i].rho !== rho) return 3;  //went back beyond current rho
-    return sledgepairedavg[i].N;
-  }
-
-  function searchfpairedass(rho, f) {
-
-    let i;
-    for (i=0; i<sledgepairedass.length; i++) {
-      if (sledgepairedass[i].rho === rho) {
-        if (sledgepairedass[i].f < f) {
-          break;
-        }
-      }
-    }
-    if ( i === sledgepairedass.length ) return 3;  //couldn't find one
-    if (i === 0) return 3; //the first entry can't have a previous rho
-    if (sledgepairedass[i].rho !== rho) return 3;  //went back beyond current rho
-    return sledgepairedass[i].N;
-  }
-
-  function setupSledgehammer() {
-    sledgeunpairedavg = [];
-    sledgeunpairedass = [];
-    sledgepairedavg = [];
-    sledgepairedass = [];
-
-    //Unpaired average
-    for (let rho = 0; rho < 1; rho += 0.01) {
-      for (let N = 3; N <= 3300; N += 1 ) {
-        f = Math.abs( jStat.studentt.inv( alphapd/2, 2*N-2 )) / Math.sqrt( N / 2 );
-        
-        sledgeunpairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-      }
-    }
-
-    //Unpaired assurance
-    for (let rho = 0; rho < 1; rho += 0.01) {
-      for (let N = 3; N <= 3300; N += 1 ) {
-        f = Math.abs( jStat.studentt.inv( alphaud/2, 2*N - 2 ) ) / (Math.sqrt( N * (N - 1) / ( jStat.chisquare.inv(gamma, 2*N - 2))  )) ;
-
-        sledgeunpairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-      }
-    }
-
-
-    //Paired average
-    for (let rho = 0; rho < 1; rho += 0.01) {
-      for (let N = 3; N <= 3300; N += 1 ) {
-        f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N / (2*(1-rho)) );
-        
-        sledgepairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-      }
-    }
-
-    //Paired assurance
-    for (let rho = 0; rho < 1; rho += 0.01) {
-      for (let N = 3; N <= 3300; N += 1 ) {
-        f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N * (N-1) / (2*(1-rho) * jStat.chisquare.inv(gamma, N-1)) );
-        
-        sledgepairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-      }
-    }
-
-
-  }
 
   function drawTargetMoELine() {
 
@@ -1702,3 +1395,313 @@ $(function() {
 
 
 
+function calcWithExcel() {
+  return;
+  //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
+  if (tab === 'Unpaired') {
+    //average
+    for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+    
+      cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+      Nz = Math.ceil(2 * (cv/fmoe)**2);
+      if (Nz < 3) Nz = 3; //minimum N allowed is 3
+
+      df = 2*Nz-2;
+      cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+      Nt =  Math.ceil(2 * (cv/fmoe)**2);
+
+      //now iterate  8 more times
+      for (let i = 2; i <= 9; i += 1) {
+        df =Math.max( Math.min(2*Math.ceil(Nt)-2, df+2 ), df-2 );
+
+        cv = Math.abs(jStat.studentt.inv( alphaud/2, df ));
+        Nt = Math.ceil(2 * (cv/fmoe)**2);
+        if (N < 3) N = 3;
+
+        //get local max min for oscillating values
+        if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+        else             dfodd  = df;
+      }
+
+      if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+      if (dfmax < 2) dfmax = 2;
+      dfmax = (dfmax + 2) / 2;
+
+      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax } );   
+    }
+
+    //assurance
+    if (ncurveudass) {
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+
+        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+        Nz = 2 * (cv/fmoe)**2;
+
+        //first iteration - nt1 in spreadsheet
+        df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
+        cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+        Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+        if (Nt < 3) Nt = 3;
+
+        for (let i = 2; i <= 9; i += 1) {
+          df = Math.min( 2 * Math.ceil(Nt)-2, df+2);
+
+          cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+          Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+          if (Nt < 3) Nt = 3;
+
+        //get local max min for oscillating values
+        if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+        else             dfodd  = df;            
+        }
+
+        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+        if (dfmax < 2) dfmax = 2;   
+        dfmax = Math.ceil((dfmax + 2) / 2);
+
+        NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax} )    
+      }
+    }
+  }
+
+  if (tab === 'Paired') {
+    //average
+    for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+      cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+      Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
+      if (Nz < 3) Nz = 3; //minimum N allowed is 3
+
+      df = Nz-1;
+      cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+      Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+
+      //iterate for df2 and Nt2 etc
+      for (let i = 2; i <= 9; i += 1) {
+        df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
+
+        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+        Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+
+        //get local max min for oscillating values
+        if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+        else             dfodd  = df;
+      }
+
+      if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+      if (dfmax < 2) dfmax = 2;
+      
+      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
+
+    }
+
+    //assurance
+    if (ncurvepdass) {
+
+      //test
+      //truncatedisplaypd = 1.4;
+      //correlationrho = 0.9;
+
+      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+        Nz = Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2);
+        if (Nz < 3) Nz = 3; //minimum N allowed is 3
+
+        //first iteration - nt1 in spreadsheet
+        df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
+        cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+        Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
+        if (Nt < 3) Nt = 3;
+
+        //iterate for df2 and Nt2 etc        
+        for (let i = 2; i <= 9; i += 1) {
+
+          df = Math.min(Math.ceil(Nt)-1, df+1);
+
+          cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+          Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
+          if (Nt < 3) Nt = 3;
+
+          //get local max min for oscillating values
+          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+          else             dfodd  = df;
+        }
+
+        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+        if (dfmax < 2) dfmax = 2;
+
+        NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
+      }
+    }
+  }
+
+}
+
+
+function calcWithSledgehammer() {
+  cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+
+  if (tab === 'Unpaired') {
+    //average
+    for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+
+      fmoe = parseFloat(fmoe.toFixed(5));
+      correlationrho = parseFloat(correlationrho.toFixed(3));
+      Nt = searchfunpairedavg(correlationrho, fmoe);  
+
+      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+    }
+
+    //assurance
+    if (ncurveudass) {
+      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+
+        fmoe = parseFloat(fmoe.toFixed(5));
+        correlationrho = parseFloat(correlationrho.toFixed(3));
+        Nt = searchfunpairedass(correlationrho, fmoe);  
+
+        NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
+      }
+    }
+  }
+
+  if (tab === 'Paired') {
+    //average
+    for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+
+      fmoe = parseFloat(fmoe.toFixed(5));
+      correlationrho = parseFloat(correlationrho.toFixed(3));
+      Nt = searchfpairedavg(correlationrho, fmoe);  
+
+      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+
+    }
+
+    //assurance
+    if (ncurvepdass) {
+      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+
+        fmoe = parseFloat(fmoe.toFixed(5));
+        correlationrho = parseFloat(correlationrho.toFixed(3));
+        
+        Nt = searchfpairedass(correlationrho, fmoe);  
+
+        NlineAss.push( { fmoe: fmoe, N: Nt } )    
+      }
+    }
+  }
+
+}
+
+function searchfunpairedavg(rho, f) {
+
+  let i;
+  for (i=0; i<sledgeunpairedavg.length; i++) {
+    if (sledgeunpairedavg[i].rho === rho) {
+      if (sledgeunpairedavg[i].f < f) {
+        break;
+      }
+    }
+  }
+  if ( i === sledgeunpairedavg.length ) return 3;  //couldn't find one
+  if (i === 0) return 3; //the first entry can't have a previous rho
+  if (sledgeunpairedavg[i].rho !== rho) return 3;  //went back beyond current rho
+  return sledgeunpairedavg[i].N;
+}
+
+function searchfunpairedass(rho, f) {
+
+  let i;
+  for (i=0; i<sledgeunpairedass.length; i++) {
+    if (sledgeunpairedass[i].rho === rho) {
+      if (sledgeunpairedass[i].f < f) {
+        break;
+      }
+    }
+  }
+  if ( i === sledgeunpairedass.length ) return 3;  //couldn't find one
+  if (i === 0) return 3; //the first entry can't have a previous rho
+  if (sledgeunpairedass[i].rho !== rho) return 3;  //went back beyond current rho
+  return sledgeunpairedass[i].N;
+}
+
+function searchfpairedavg(rho, f) {
+  // o = sledge.find(obj => obj.rho === rho && Math.abs(obj.f - f) < 0.001);
+  // if (o == null) return 3; //lg(`rho -->  ${rho}  f --> ${f}`);
+  // else return o.N;
+
+  let i;
+  for (i=0; i<sledgepairedavg.length; i++) {
+    if (sledgepairedavg[i].rho === rho) {
+      if (sledgepairedavg[i].f < f) {
+        break;
+      }
+    }
+  }
+  if ( i === sledgepairedavg.length ) return 3;  //couldn't find one
+  if (i === 0) return 3; //the first entry can't have a previous rho
+  if (sledgepairedavg[i].rho !== rho) return 3;  //went back beyond current rho
+  return sledgepairedavg[i].N;
+}
+
+function searchfpairedass(rho, f) {
+
+  let i;
+  for (i=0; i<sledgepairedass.length; i++) {
+    if (sledgepairedass[i].rho === rho) {
+      if (sledgepairedass[i].f < f) {
+        break;
+      }
+    }
+  }
+  if ( i === sledgepairedass.length ) return 3;  //couldn't find one
+  if (i === 0) return 3; //the first entry can't have a previous rho
+  if (sledgepairedass[i].rho !== rho) return 3;  //went back beyond current rho
+  return sledgepairedass[i].N;
+}
+
+function setupSledgehammer() {
+return;
+  sledgeunpairedavg = [];
+  sledgeunpairedass = [];
+  sledgepairedavg = [];
+  sledgepairedass = [];
+
+  //Unpaired average
+  for (let rho = 0; rho < 1; rho += 0.01) {
+    for (let N = 3; N <= 3300; N += 1 ) {
+      f = Math.abs( jStat.studentt.inv( alphapd/2, 2*N-2 )) / Math.sqrt( N / 2 );
+      
+      sledgeunpairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+    }
+  }
+
+  //Unpaired assurance
+  for (let rho = 0; rho < 1; rho += 0.01) {
+    for (let N = 3; N <= 3300; N += 1 ) {
+      f = Math.abs( jStat.studentt.inv( alphaud/2, 2*N - 2 ) ) / (Math.sqrt( N * (N - 1) / ( jStat.chisquare.inv(gamma, 2*N - 2))  )) ;
+
+      sledgeunpairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+    }
+  }
+
+
+  //Paired average
+  for (let rho = 0; rho < 1; rho += 0.01) {
+    for (let N = 3; N <= 3300; N += 1 ) {
+      f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N / (2*(1-rho)) );
+      
+      sledgepairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+    }
+  }
+
+  //Paired assurance
+  for (let rho = 0; rho < 1; rho += 0.01) {
+    for (let N = 3; N <= 3300; N += 1 ) {
+      f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N * (N-1) / (2*(1-rho) * jStat.chisquare.inv(gamma, N-1)) );
+      
+      sledgepairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+    }
+  }
+
+
+}
