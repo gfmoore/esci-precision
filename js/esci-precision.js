@@ -26,11 +26,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.6   28 Oct 2020 #6 Added iteration for assurance and fixed error in paired average.
 0.1.7   28 Oct 2020 #6 Added sledgehammer code - so slow to start now.
 0.1.8   29 Oct 2020 #6 Refined iteration code and commented out Excel and Sledgehammer code
+0.1.9   29 Oct 2020 #3 Draw MoE curve without offset and redraw horizontal axis.
 
 */
 //#endregion 
 
-let version = '0.1.8';
+let version = '0.1.9';
 let test = true;
 
 'use strict';
@@ -50,6 +51,8 @@ $(function() {
   let heightD;   
   let rwidth;                                                                 //the width returned by resize
   let rheight;                                                                //the height returned by resize
+
+  let xAxis, yAxis;
 
   let x;
   let y;
@@ -520,19 +523,12 @@ $(function() {
     x = d3.scaleLinear().domain([0, 2.0]).range([margin.left, width]);
     y = d3.scaleLinear().domain([0, maxN]).range([heightD-50, 60]);  
 
-    //test co-ords
-    // svgD.append('circle').attr('class', 'test').attr('cx', x(0)).attr('cy', y(0)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
-    // svgD.append('circle').attr('class', 'test').attr('cx', x(0)).attr('cy', y(100)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
-    // svgD.append('circle').attr('class', 'test').attr('cx', x(1.5)).attr('cy', y(0)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
-    // svgD.append('circle').attr('class', 'test').attr('cx', x(1.5)).attr('cy', y(100)).attr('r', 10).attr('stroke', 'red').attr('stroke-width', 2).attr('fill', 'red');  
-
-
     //bottom horizontal axis
-    let xAxis = d3.axisBottom(x);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
+    xAxis = d3.axisBottom(x);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
     svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
 
     //left vertical axis
-    let yAxis = d3.axisLeft(y);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
+    yAxis = d3.axisLeft(y);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
     svgD.append('g').attr('class', 'leftaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(${margin.left}, 0)` ).call(yAxis);
 
     //add some text labels
@@ -966,12 +962,13 @@ $(function() {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
 
-      if (ord < 0.1) ord = 0.1;  //just to make the curve not hit the horizontal axis
-
       moedist[i].N = Math.abs(1 * ord);
     }
 
      svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', '#993300').attr('stroke-width', 2).attr('fill', '#FFCC99');
+
+     //redraw bottom horizotal axis
+     svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
 
   }
 
