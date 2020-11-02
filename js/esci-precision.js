@@ -28,11 +28,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.8   29 Oct 2020 #6 Refined iteration code and commented out Excel and Sledgehammer code
 0.1.9   29 Oct 2020 #3 Draw MoE curve without offset and redraw horizontal axis.
 0.1.10  2  Nov 2020 #3 Added vertical axis and label
+0.1.11  2  Nov 2020 #6 Removed restriction on minimum N = 3, seems ok
 
 */
 //#endregion 
 
-let version = '0.1.10';
+let version = '0.1.11';
 let test = true;
 
 'use strict';
@@ -738,7 +739,8 @@ $(function() {
       //average
       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);  //this is N0
+        //Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);  //this is N0
+        Nt = Math.ceil(2 * (cv/fmoe)**2);
         while (true) {
           f = Math.abs(jStat.studentt.inv( alphaud/2, 2*Nt-2 )) / Math.sqrt(Nt/2);
           if (f <= fmoe) break;
@@ -752,7 +754,8 @@ $(function() {
       if (ncurveudass) {
         for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
     
-          Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+          // Nt = Math.max(Math.ceil(2 * (cv/fmoe)**2), 3);
+          Nt = Math.ceil(2 * (cv/fmoe)**2);
           while (true) {
             f = Math.abs( jStat.studentt.inv( alphaud/2, 2*Nt - 2 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( jStat.chisquare.inv(gamma, 2*Nt - 2))  )) ;
             if (f <= fmoe) break;
@@ -768,7 +771,8 @@ $(function() {
       //average
       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        Nt = Math.max(Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2), 3);
+        // Nt = Math.max(Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2), 3);
+        Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2);
         while (true) {
           f = Math.abs(jStat.studentt.inv( alphapd/2, Nt-1 )) / Math.sqrt(Nt/(2 * (1 - correlationrho)));
           if (f <= fmoe) break;
@@ -782,7 +786,8 @@ $(function() {
       if (ncurvepdass) {
         for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
 
-          Nt = Math.max(Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2), 3);
+          // Nt = Math.max(Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2), 3);
+          Nt = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
           while (true) {
             f = Math.abs( jStat.studentt.inv( alphapd/2, Nt - 1 ) ) / (Math.sqrt( Nt * (Nt - 1) / ( 2*(1-correlationrho) * jStat.chisquare.inv(gamma, Nt - 1)) ));
             if (f <= fmoe) break;
@@ -949,15 +954,17 @@ $(function() {
         df = 2*n - 2;
         f = Math.sqrt( 2 / n) * Math.abs( jStat.studentt.inv( alphaud/2, df));
       }
+
       if (tab === 'Paired') {
         df = n - 1;
         f = Math.sqrt( 2 * (1 - correlationrho) / n) * Math.abs( jStat.studentt.inv( alphapd/2, df));
       }
+
       f2 = (fmoe * fmoe) / (f * f / df);
 
       Rcum = 1 - jStat.chisquare.cdf(f2, df);
 
-      moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), n:n, f:f, f2: f2, Rcum: Rcum, ord: 0, N: 0 })
+      moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), n:n, f:f, f2: f2, Rcum: Rcum, ord: 0, N: 0})
     }
     
     //now scan and obtain the ordinate value, make a note of the max value and where ord > 0 for drawing axis
