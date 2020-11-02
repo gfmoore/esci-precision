@@ -27,11 +27,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.7   28 Oct 2020 #6 Added sledgehammer code - so slow to start now.
 0.1.8   29 Oct 2020 #6 Refined iteration code and commented out Excel and Sledgehammer code
 0.1.9   29 Oct 2020 #3 Draw MoE curve without offset and redraw horizontal axis.
+0.1.10  2  Nov 2020 #3 Added vertical axis and label
 
 */
 //#endregion 
 
-let version = '0.1.9';
+let version = '0.1.10';
 let test = true;
 
 'use strict';
@@ -303,12 +304,15 @@ $(function() {
       }      
     }
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
-
+    drawFeatures();
   }
   
+  function drawFeatures() {
+    drawNline();
+    drawTargetMoEBlob();
+    //drawTargetMoELine();  //placed in drawMoECurve as I need to be able to draw over it with N label
+    drawMoECurve();
+  }
 
   //Switch tabs
   $("#smarttab").on("showTab", function(e, anchorObject, tabIndex) {
@@ -477,8 +481,9 @@ $(function() {
     }
 
     drawNline();
+    drawTargetMoEBlob();
+
     drawMoECurve();
-    drawTargetMoELine();
   }
 
   function setupAxes() {
@@ -791,19 +796,21 @@ $(function() {
 
   }
 
-
   function drawTargetMoELine() {
-
-    let n;
-
     d3.selectAll('.targetmoeline').remove();
     d3.selectAll('.targetmoelinetext').remove();
-    d3.selectAll('.targetmoelineblob').remove();
-    d3.selectAll('.targetmoelineblobtext').remove();
 
     //draw vertical line and label
     svgD.append('line').attr('class', 'targetmoeline').attr('x1', x(targetmoe)).attr('y1', y(0)).attr('x2', x(targetmoe)).attr('y2', y(maxN)).attr('stroke', 'firebrick').attr('stroke-width', 3).attr('fill', 'none');
     svgD.append('text').text('Target MoE').attr('class', 'targetmoelinetext').attr('x', x(targetmoe) - 40 ).attr('y', y(maxN)-20).attr('text-anchor', 'start').attr('fill', 'firebrick').attr('font-size', '1.8rem');
+  }
+
+  function drawTargetMoEBlob() {
+
+    let n;
+
+    d3.selectAll('.targetmoelineblob').remove();
+    d3.selectAll('.targetmoelineblobtext').remove();
 
   
     //find the N for that fmoe value from the Nline data array of objects (probably a functional way, but hey this works)
@@ -883,10 +890,10 @@ $(function() {
   }
 
   function drawMoECurve() {
+
     d3.selectAll('.moecurve').remove();
 
     let moedist = [];
-    let y;
     let f;
     let f2; //(^2/() in Excel)
     let n;
@@ -938,9 +945,6 @@ $(function() {
         }
       }
      
-     
-
-
       if (tab === 'Unpaired') {
         df = 2*n - 2;
         f = Math.sqrt( 2 / n) * Math.abs( jStat.studentt.inv( alphaud/2, df));
@@ -956,16 +960,33 @@ $(function() {
       moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), n:n, f:f, f2: f2, Rcum: Rcum, ord: 0, N: 0 })
     }
     
-    //now scan and obtain the ordinate value
+    //now scan and obtain the ordinate value, make a note of the max value and where ord > 0 for drawing axis
     let ord;
+    let notzero = 0;
+    let maxmoe = 0;
     for (let i = 1; i < moedist.length - 1; i += 1) {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
-
       moedist[i].N = Math.abs(1 * ord);
+      if (notzero === 0 && ord > 0.01) notzero = moedist[i].fmoe; //note where ord > 0
+      if (ord > maxmoe) maxmoe = ord; 
+
     }
 
+    //draw curve and shade
      svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', '#993300').attr('stroke-width', 2).attr('fill', '#FFCC99');
+
+     //drawMoE line here
+     drawTargetMoELine();
+
+    //draw a vertical and N
+    //just work out position of label
+    let labelh = maxmoe/2;
+    if (labelh < 3) labelh = 3;
+
+    svgD.append('line').attr('class', 'moecurve').attr('x1', x(notzero)).attr('y1', y(0)).attr('x2', x(notzero)).attr('y2', y(maxmoe)-20).attr('stroke', '#993300').attr('stroke-width', 1).attr('fill', 'none');
+    svgD.append('rect').attr('class', 'moecurve').attr('x', x(notzero)+10 ).attr('y', y(labelh)-15 ).attr('width', 30 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
+    svgD.append('text').text(n).attr('class', 'moecurve').attr('x', x(notzero)+10 ).attr('y', y(labelh)).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.8rem');
 
      //redraw bottom horizotal axis
      svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
@@ -985,10 +1006,7 @@ $(function() {
       calctype = 'sledgehammer';
     }
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
-
+    drawFeatures()
   })
 
 
@@ -998,18 +1016,14 @@ $(function() {
     ncurveudavg = true;
     ncurveudass = false;
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
+    drawFeatures()
   })
 
   $ncurveudass.on('change', function() {
     ncurveudavg = false;
     ncurveudass = true;
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
+    drawFeatures()
   })
 
   /*---------------------------------------------Tab 1 Panel 3 Display Values checkbox-------------------*/
@@ -1017,9 +1031,7 @@ $(function() {
   $displayvaluesud.on('change', function() {
     displayvaluesud = $displayvaluesud.is(':checked');
     
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
+    drawFeatures()
   })
 
   /*---------------------------------------------Tab 1 Panel 4 Truncate MoE----------------------------*/
@@ -1028,9 +1040,8 @@ $(function() {
 
   $CIud.on('change', function() {
     alphaud = parseFloat($CIud.val()); 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();    
+
+    drawFeatures()
   })
 
   /*---------------------------------------------Tab 2 Panel 1 Target MoE------------------------------*/
@@ -1041,18 +1052,14 @@ $(function() {
     ncurvepdavg = true;
     ncurvepdass = false;
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
+    drawFeatures()
   })
 
   $ncurvepdass.on('change', function() {
     ncurvepdavg = false;
     ncurvepdass = true;
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
+    drawFeatures()
   })
 
   /*---------------------------------------------Tab 2 Panel 4 Display Values checkbox-------------------*/
@@ -1060,9 +1067,7 @@ $(function() {
   $displayvaluespd.on('change', function() {
     displayvaluespd = $displayvaluespd.is(':checked');
 
-    drawNline();
-    drawMoECurve();
-    drawTargetMoELine();
+    drawFeatures()
   })
 
   /*---------------------------------------------Tab 2 Panel 5 Truncate MoE----------------------------*/
@@ -1071,9 +1076,8 @@ $(function() {
 
  $CIpd.on('change', function() {
   alphapd = parseFloat($CIpd.val()); 
-  drawNline();
-  drawMoECurve();  
-  drawTargetMoELine();  
+
+  drawFeatures()
 })
 
   // #region  -----------------------------------Nudge bars ------------------------------------------------
@@ -1391,7 +1395,7 @@ $(function() {
 })
 
 
-
+//remove at some point.
 function calcWithExcel() {
   return;
   //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
