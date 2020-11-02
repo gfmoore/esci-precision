@@ -17,7 +17,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.3
 0.1.4   28 Oct 2020 #6 Added a missed maximum to dt for Paired assurance calcs, Added temp radio button for type of calc
 0.1.11
-
+0.1.12  2  Nov 2020 #8 Tooltips added
 -->
 <!--endregion -->
 
@@ -84,14 +84,17 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
         <div id=breadcrumbs><span id=homecrumb class=hometip data-tooltip>Home></span><span id=distributioncrumb>precision for planning</span></div>
 
+        <div id=tab1text data-tooltip>
+          Find the smallest <em>N</em> that will give a 95% CI with MoE no more than chosen target MoE, either on average, or with 99% assurance
+        </div>        
         <!---------------------------------Set up tabs------------------------------------------------->
         <div id="smarttab">
 
           <ul class="nav">
-            <li>
+            <li class=tab1tip data-tooltip>
               <a class="nav-link" href="#tab-1">Two Independent Groups</a>
             </li>
-            <li>
+            <li class=tab2tip data-tooltip>
               <a class="nav-link" href="#tab-2">Paired Design</a>
             </li>
           </ul>
@@ -105,32 +108,32 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
                 <!-------------------------------------Tab 1 Panel 1 Target MoE Unpaired----------------------------------------->                
                 <div id=targetmoeudpanel>
-                  <div  class=font18><span class=red>1 </span>Target MoE of 95% CI <span id=ciud class=backcolour>0.0</span></div>
-                  <div class=font15>...set by slider below figure</div>
+                  <div  class=font18><span class='red targettip' data-tooltip>1 </span><span class=targettip data-tooltip>Target MoE of 95% CI </span><span id=ciud data-tooltip class=backcolour>0.0</span></div>
+                  <div class='font15 targettip' data-tooltip>...set by slider below figure</div>
                 </div>
 
                 <!-------------------------------------Tab 1 Panel 2 N Curves Unpaired----------------------------------------->                
                 <div id=ncurvesudpanel>
-                  <div class=font18><span class=red>2 </span><em>N</em> curves</div>
-                  <div class=font16><input id=ncurveudavg type=radio name=ncurveud checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
-                  <div class=font16><input id=ncurveudass type=radio name=ncurveud><em>N</em> curve for target MoE, <span class=small1><strong>with 99%</strong></span></div>
-                  <div id=asstext class=small1><strong>assurance</strong></div>
+                  <div class='font18 ncurvestip' data-tooltip><span class='red ncurves' data-tooltip>2 </span><em>N</em> curves</div>
+                  <div class='font16 ncaveragetip' data-tooltip><input id=ncurveudavg type=radio name=ncurveud checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
+                  <div class='font16 ncassurancetip' data-tooltip><input id=ncurveudass type=radio name=ncurveud><em>N</em> curve for target MoE, <span class=small1><strong>with 99%</strong></span></div>
+                  <div id=asstext class='small1 ncassurancetip' data-tooltip><strong>assurance</strong></div>
                 </div>
 
                 <!-------------------------------------Tab 1 Panel 3 N Display Values Unpaired----------------------------------------->                
                 <div id=displayvaluesudpanel>
-                  <div class=font18><span class=red>3 </span>Display values</div>
-                  <div class=font16>Display all <em>N</em> values <input id=displayvaluesud type=checkbox></div>
+                  <div class='font18 dispvalstip' data-tooltip><span class=red>3 </span>Display values</div>
+                  <div class='font16 dispvalstip' data-tooltip>Display all <em>N</em> values <input id=displayvaluesud type=checkbox></div>
                 </div>
 
                 <!-------------------------------------Tab 1 Panel 4 Truncate display Unpaired----------------------------------------->                
                 <div id=truncatedisplayudpanel>
-                  <div class=font18><span class=red>4 </span>Truncate display at target MoE of </div>
+                  <div class='font18 truncatetip' data-tooltip><span class=red>4 </span>Truncate display at target MoE of </div>
                   <div id=truncatedisplayudsliderpanel>
-                    <div id=truncatedisplayudsliderdiv><input id=truncatedisplayudslider type=text/></div>
-                    <div><img id=truncatedisplayudnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
-                    <div><img id=truncatedisplayudnudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
-                    <input id=truncatedisplayudval type=text>
+                    <div id=truncatedisplayudsliderdiv class=truncateslidertip data-tooltip><input id=truncatedisplayudslider type=text/></div>
+                    <div class=truncateslidertip data-tooltip><img id=truncatedisplayudnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+                    <div class=truncateslidertip data-tooltip><img id=truncatedisplayudnudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+                    <input id=truncatedisplayudval type=text class=truncatevaltip data-tooltip>
                   </div>
           
                 </div>
@@ -175,19 +178,19 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
                 <!-------------------------------------Tab 2 Panel 1 Target MoE Paired----------------------------------------->                
   
                 <div id=targetmoepdpanel>
-                  <div class=font18><span class=red>1 </span>Target MoE of 95% CI <span id=cipd class=backcolour>0.0</span></div>
-                  <div class=font15>...set by slider below figure</div>
+                  <div class=font18><span class='red targettip' data-tooltip>1 </span><span class=targettip data-tooltip>Target MoE of 95% CI </span><span id=cipd class=backcolour>0.0</span></div>
+                  <div class='font15 targettip' data-tooltip>...set by slider below figure</div>
                 </div>
-                
+           
                 <!-------------------------------------Tab 2 Panel 2 Population correlation Paired----------------------------------------->                
                 <div id=populationcorrelationpanel>
-                  <div class=font18><span class=red>2 </span>Population correlation</div>
+                  <div class='font18 correltip' data-tooltip><span class=red>2 </span>Population correlation</div>
                   <div id=correlationrhosliderpanel>
-                    <div id=correlationrhotitle class=font16>Correlation <em>&rho;</em></div>
-                    <div id=correlationrhosliderdiv><input id=correlationrhoslider type=text/></div>
-                    <div><img id=correlationrhonudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
-                    <div><img id=correlationrhonudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
-                    <input id=correlationrhoval type=text>
+                    <div id=correlationrhotitle class='font16 correlslidertip' data-tooltip>Correlation <em>&rho;</em></div>
+                    <div id=correlationrhosliderdiv class=correlslidertip data-tooltip><input id=correlationrhoslider type=text/></div>
+                    <div class=correlslidertip data-tooltip><img id=correlationrhonudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+                    <div class=correlslidertip data-tooltip><img id=correlationrhonudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+                    <input id=correlationrhoval type=text class=correlvaltip data-tooltip>
                   </div>
                 </div>
 
@@ -195,26 +198,26 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 
                 <!-------------------------------------Tab 2 Panel 3 N Curves Paired----------------------------------------->                
                 <div id=ncurvespdpanel>
-                  <div class=font18><span class=red>3 </span><em>N</em> curves</div>
-                  <div class=font16><input id=ncurvepdavg type=radio name=ncurvepd checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
-                  <div class=font16><input id=ncurvepdass type=radio name=ncurvepd><em>N</em> curve for target MoE, <span class=small1><strong>with 99%</strong></span></div>
-                  <div id=asstext class='small1'><strong>assurance</strong></div>
+                  <div class='font18 ncurvestip' data-tooltip><span class=red>3 </span><em>N</em> curves</div>
+                  <div class='font16 ncaveragetip' data-tooltip><input id=ncurvepdavg type=radio name=ncurvepd checked=checked><em>N</em> curve for target MoE, <span class=small1><strong>on average</strong></span></div>
+                  <div class='font16 ncassurancetip'><input id=ncurvepdass type=radio name=ncurvepd><em>N</em> curve for target MoE, <span class=small1><strong>with 99%</strong></span></div>
+                  <div id=asstext class='small1 ncassurancetip' data-tooltip><strong>assurance</strong></div>
                 </div>
 
                 <!-------------------------------------Tab 2 Panel 4 N Display Values Paired----------------------------------------->                
                 <div id=displayvaluespdpanel>
-                  <div class=font18><span class=red>4 </span>Display values</div>
-                  <div class=font16>Display all <em>N</em> values <input id=displayvaluespd type=checkbox></div>
+                  <div class='font18 dispvalstip' data-tooltip><span class=red>4 </span>Display values</div>
+                  <div class='font16 dispvalstip' data-tooltip>Display all <em>N</em> values <input id=displayvaluespd type=checkbox></div>
                 </div>
 
                 <!-------------------------------------Tab 2 Panel 5 Truncate display Paired----------------------------------------->                
                 <div id=truncatedisplaypdpanel>
-                  <div class=font18><span class=red>5 </span>Truncate display at target MoE of </div>
+                  <div class='font18 truncatetip' data-tooltip><span class=red>5 </span>Truncate display at target MoE of </div>
                   <div id=truncatedisplaypdsliderpanel>
-                    <div id=truncatedisplaypdsliderdiv><input id=truncatedisplaypdslider type=text/></div>
-                    <div><img id=truncatedisplaypdnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
-                    <div><img id=truncatedisplaypdnudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
-                    <input id=truncatedisplaypdval type=text>
+                    <div id=truncatedisplaypdsliderdiv class=truncateslidertip data-tooltip><input id=truncatedisplaypdslider type=text/></div>
+                    <div class=truncateslidertip data-tooltip><img id=truncatedisplaypdnudgebackward class="icons slidericons" src=./images/left.png alt='nudge backwards'></div>
+                    <div class=truncateslidertip data-tooltip><img id=truncatedisplaypdnudgeforward class="icons slidericons" src=./images/right.png alt='nudge forward'></div>
+                    <input id=truncatedisplaypdval type=text class=truncatevaltip data-tooltip>
                   </div>
 
                 </div>

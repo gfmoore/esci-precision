@@ -29,11 +29,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.9   29 Oct 2020 #3 Draw MoE curve without offset and redraw horizontal axis.
 0.1.10  2  Nov 2020 #3 Added vertical axis and label
 0.1.11  2  Nov 2020 #6 Removed restriction on minimum N = 3, seems ok
+0.1.12  2  Nov 2020 #8 Tooltips added
 
 */
 //#endregion 
 
-let version = '0.1.11';
+let version = '0.1.12';
 let test = true;
 
 'use strict';
@@ -1358,7 +1359,30 @@ $(function() {
 
     Tipped.create('.hometip',       'Click to return to esci Home',                   { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
-    //spare
+
+    Tipped.create('.tab1tip',     'Two Independent Groups Design, each group of size <em>N</em>', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.tab2tip',     'Paired Design", with group of size <em>N</em>', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('.targettip',  'Use large slider below figure to choose a value for target MoE', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#ciud',        'Value of target MoE, marked by position of cursor', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('#cipd',        'Value of target MoE, marked by position of cursor', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+
+    Tipped.create('.ncurvestip', 'Curves show the relation between N and target MoE', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.ncaveragetip', 'Black curve shows how N varies with target MoE on average', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.ncassurancetip', 'Red curve shows how N varies with target MoE with 99% assurance (grey curve: on average)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+    Tipped.create('.dispvalstip', 'Turn on or off the display of <em>N</em> values at each point on displayed curve(s)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    
+    Tipped.create('.truncatetip', 'Use slider to choose where to truncate the left end of curve(s)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.truncateslidertip', 'Select a value within 0.05 and 0.30', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.truncatevaltip', 'Left-truncate curve(s) at this value', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+
+
+    Tipped.create('.correltip', 'Need something here', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.correlslidertip', 'Need something here', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.correlvaltip', 'Need something here', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    //Tipped.create('.correltip', 'Need something here', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     // Tipped.create('. tip', '', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     Tipped.disable('[data-tooltip]');
