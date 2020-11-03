@@ -33,11 +33,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.13  3  Nov 2020 #9 Fix figure legend position
 0.1.14  3  Nov 2020 #8 Tooltips edited
 0.1.15  3  Nov 2020 #10 Display of N now depends on curve
+0.1.16  3  Nov 2020 #3  Temporary display of 99th percentile
 
 */
 //#endregion 
 
-let version = '0.1.15';
+let version = '0.1.16';
 let test = true;
 
 'use strict';
@@ -72,13 +73,9 @@ $(function() {
  
   let N;
   let maxN;
-  let Nz;
   let Nt;
 
   let df;
-  let dfeven;
-  let dfodd;
-  let dfmax;
 
   let fmoemax = 2.005;  
   let fmoeinc = 0.005;
@@ -929,72 +926,72 @@ $(function() {
     let moedist = [];
     let f;
     let f2; //(^2/() in Excel)
-    let n;
-    let df;
+    //let n;
+    //let df;
     let Rcum;
 
+    n=0;
+    //get n for fmoe
+    if (tab === 'Unpaired') {
+      if (ncurveudavg) {
+        for (let i = 0; i < Nline.length; i += 1) {
+          if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
+            N = Nline[i].N;
+            break;
+          }
+        }    
+      }
+
+      if (ncurveudass) {
+        for (let i = 0; i < NlineAss.length; i += 1) {
+          if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
+            N = NlineAss[i].N;
+            break;
+          }
+        }    
+      }
+
+    }
+    if (tab === 'Paired') {
+      if (ncurvepdavg) {
+        for (let i = 0; i < Nline.length; i += 1) {
+          if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
+            N = Nline[i].N;
+            break;
+          }
+        }    
+      }
+
+      if (ncurvepdass) {
+        for (let i = 0; i < NlineAss.length; i += 1) {
+          if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
+            N = NlineAss[i].N;
+            break;
+          }
+        }
+  
+      }
+    }
 
     for (let fmoe = 0; fmoe < fmoemax; fmoe += fmoeinc) {
 
-      //get n for fmoe
       if (tab === 'Unpaired') {
-        if (ncurveudavg) {
-          for (let i = 0; i < Nline.length; i += 1) {
-            if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
-              n = Nline[i].N;
-              break;
-            }
-          }    
-        }
-
-        if (ncurveudass) {
-          for (let i = 0; i < NlineAss.length; i += 1) {
-            if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
-              n = NlineAss[i].N;
-              break;
-            }
-          }    
-        }
-
-      }
-      if (tab === 'Paired') {
-        if (ncurvepdavg) {
-          for (let i = 0; i < Nline.length; i += 1) {
-            if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
-              n = Nline[i].N;
-              break;
-            }
-          }    
-        }
-
-        if (ncurvepdass) {
-          for (let i = 0; i < NlineAss.length; i += 1) {
-            if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
-              n = NlineAss[i].N;
-              break;
-            }
-          }
-    
-        }
-      }
-     
-      if (tab === 'Unpaired') {
-        df = 2*n - 2;
-        f = Math.sqrt( 2 / n) * Math.abs( jStat.studentt.inv( alphaud/2, df));
+        df = 2*N - 2;
+        f = Math.sqrt( 2 / N) * Math.abs( jStat.studentt.inv( alphaud/2, df));
       }
 
       if (tab === 'Paired') {
-        df = n - 1;
-        f = Math.sqrt( 2 * (1 - correlationrho) / n) * Math.abs( jStat.studentt.inv( alphapd/2, df));
+        df = N - 1;
+        f = Math.sqrt( 2 * (1 - correlationrho) / N) * Math.abs( jStat.studentt.inv( alphapd/2, df));
       }
 
       f2 = (fmoe * fmoe) / (f * f / df);
-
       Rcum = 1 - jStat.chisquare.cdf(f2, df);
 
-      moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), n:n, f:f, f2: f2, Rcum: Rcum, ord: 0, N: 0})
+      moedist.push( { fmoe: parseFloat(fmoe.toFixed(3)), Rcum: Rcum, ord: 0, N: 0})
     }
     
+
     //now scan and obtain the ordinate value, make a note of the max value and where ord > 0 for drawing axis
     let ord;
     let notzero = 0;
@@ -1003,7 +1000,7 @@ $(function() {
     for (let i = 1; i < moedist.length - 1; i += 1) {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
-      moedist[i].N = Math.abs(1 * ord);
+      moedist[i].N = Math.abs(1 * ord);  //in case I wanted to scale it
       if (notzero === 0 && ord > 0.01) notzero = moedist[i].fmoe; //note where ord > 0
       if (ord > maxmoe) maxmoe = ord; 
       if (ord > maxord) maxord = ord;
@@ -1036,12 +1033,39 @@ $(function() {
     svgD.append('line').attr('class', 'moecurve').attr('x1', x(notzero)).attr('y1', y(0)).attr('x2', x(notzero)).attr('y2', y(maxmoe)-20).attr('stroke', '#993300').attr('stroke-width', 1).attr('fill', 'none');
     if (n < 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 30 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
     if (n >= 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 36 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
-    svgD.append('text').text(n).attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)).attr('text-anchor', 'start').attr('fill', '#993300').attr('font-size', '1.8rem').attr('font-weight', 'bold');
+    svgD.append('text').text(N).attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)).attr('text-anchor', 'start').attr('fill', '#993300').attr('font-size', '1.8rem').attr('font-weight', 'bold');
 
      //redraw bottom horizotal axis
      svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
 
+
+    //get Rcum value
+    let Rcum991 = 0;
+    let Rcum992 = 0;
+    let moe991 = 0;
+    let moe992 = 0;
+    for (let i = 1; i < moedist.length - 1; i += 1) {
+      //lg(`fmoe: ${moedist[i].fmoe.toFixed(3)}    Rcum: ${moedist[i].Rcum}`);
+      if (moedist[i].Rcum <= 0.01) {
+        moe991 = moedist[i-1].fmoe;
+        rcum991 = moedist[i-1].Rcum;
+        moe992 = moedist[i].fmoe;
+        rcum992 = moedist[i].Rcum;
+        break;
+      } 
+      // if (moedist[i].fmoe === targetmoe) {
+      //   Rcum99 = moedist[i].Rcum;
+      //   break;
+      // }
+    }
+    console.log(moe991 + ' - ' + moe992);
+    $('#moea').text(moe991.toFixed(3));
+    $('#rcuma').text(rcum991.toFixed(6));
+    $('#moeb').text(moe992.toFixed(3));
+    $('#rcumb').text(rcum992.toFixed(6));
+
   }
+
 
 
   //test radio buttons
