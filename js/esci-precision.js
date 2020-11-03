@@ -32,11 +32,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.12  2  Nov 2020 #8 Tooltips added 
 0.1.13  3  Nov 2020 #9 Fix figure legend position
 0.1.14  3  Nov 2020 #8 Tooltips edited
+0.1.15  3  Nov 2020 #10 Display of N now depends on curve
 
 */
 //#endregion 
 
-let version = '0.1.14';
+let version = '0.1.15';
 let test = true;
 
 'use strict';
@@ -998,14 +999,28 @@ $(function() {
     let ord;
     let notzero = 0;
     let maxmoe = 0;
+    let maxord = 0;
     for (let i = 1; i < moedist.length - 1; i += 1) {
       ord = (moedist[i-1].Rcum - moedist[i+1].Rcum) / (2 * fmoeinc);
       moedist[i].ord = ord;
       moedist[i].N = Math.abs(1 * ord);
       if (notzero === 0 && ord > 0.01) notzero = moedist[i].fmoe; //note where ord > 0
       if (ord > maxmoe) maxmoe = ord; 
-
+      if (ord > maxord) maxord = ord;
     }
+
+    // a position for drawing the label, :sigh
+    let halfwayx = 0; 
+    let halfwayy = 0;
+    for (let i = 1; i < moedist.length - 1; i += 1) {
+      if (moedist[i].ord > maxmoe/2) {
+        halfwayx = moedist[i].fmoe;
+        break;
+      }
+    }
+    halfwayx -= 0.03;   //0.07 is to left of curve
+    halfwayy = maxord/2;
+
 
     //draw curve and shade
      svgD.append('path').attr('class', 'moecurve').attr('d', line(moedist)).attr('stroke', '#993300').attr('stroke-width', 2).attr('fill', '#FFCC99');
@@ -1019,8 +1034,9 @@ $(function() {
     if (labelh < 3) labelh = 3;
 
     svgD.append('line').attr('class', 'moecurve').attr('x1', x(notzero)).attr('y1', y(0)).attr('x2', x(notzero)).attr('y2', y(maxmoe)-20).attr('stroke', '#993300').attr('stroke-width', 1).attr('fill', 'none');
-    svgD.append('rect').attr('class', 'moecurve').attr('x', x(notzero)+10 ).attr('y', y(labelh)-15 ).attr('width', 30 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
-    svgD.append('text').text(n).attr('class', 'moecurve').attr('x', x(notzero)+10 ).attr('y', y(labelh)).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.8rem');
+    if (n < 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 30 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
+    if (n >= 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 36 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
+    svgD.append('text').text(n).attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)).attr('text-anchor', 'start').attr('fill', '#993300').attr('font-size', '1.8rem').attr('font-weight', 'bold');
 
      //redraw bottom horizotal axis
      svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
