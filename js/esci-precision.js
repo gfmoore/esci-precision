@@ -29,12 +29,13 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.9   29 Oct 2020 #3 Draw MoE curve without offset and redraw horizontal axis.
 0.1.10  2  Nov 2020 #3 Added vertical axis and label
 0.1.11  2  Nov 2020 #6 Removed restriction on minimum N = 3, seems ok
-0.1.12  2  Nov 2020 #8 Tooltips added
+0.1.12  2  Nov 2020 #8 Tooltips added 
+0.1.13  3  Nov 2020 #9 Fix figure legend position
 
 */
 //#endregion 
 
-let version = '0.1.12';
+let version = '0.1.13';
 let test = true;
 
 'use strict';
@@ -584,33 +585,57 @@ $(function() {
     // }
 
     //display key
+    let poslegend = width-420;
+    let legendbreak = false;
+    if (width < 650) {
+      poslegend = width - 260;
+      legendbreak = true;
+    }
 
     //with average
     if ( (tab === 'Unpaired' && ncurveudavg) || (tab === 'Paired' && ncurvepdavg) ) {
-      svgD.append('circle').attr('class', 'key').attr('cx', 3*width/4 - 20).attr('cy', 145).attr('r', '5').attr('fill', 'black').attr('font-size', '1.4rem').style('font-style', 'italic');
-      svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 145).attr('x2', 3*width/4 + 0 ).attr('y2', 145).attr('stroke', 'black').attr('stroke-width', '3');
-      svgD.append('text').text('N,').attr('class', 'key').attr('x', 3*width/4 +10).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
-      svgD.append('text').text('for average MoE = target MoE').attr('class', 'key').attr('x', 3*width/4 + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('circle').attr('class', 'key').attr('cx', poslegend - 20).attr('cy', 145).attr('r', '5').attr('fill', 'black').attr('font-size', '1.4rem').style('font-style', 'italic');
+      svgD.append('line').attr('class', 'key').attr('x1', poslegend - 40 ).attr('y1', 145).attr('x2', poslegend + 0 ).attr('y2', 145).attr('stroke', 'black').attr('stroke-width', '3');
+      svgD.append('text').text('N,').attr('class', 'key').attr('x', poslegend +10).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      if (!legendbreak) {
+        svgD.append('text').text('for average MoE no more than target MoE').attr('class', 'key').attr('x', poslegend + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      }
+      else {
+        svgD.append('text').text('for average MoE no more').attr('class', 'key').attr('x', poslegend + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+        svgD.append('text').text(' than target MoE').attr('class', 'key').attr('x', poslegend + 40).attr('y', 180).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      }
     }
 
     //with assurance
     if ( (tab === 'Unpaired' && ncurveudass) || (tab === 'Paired' && ncurvepdass) ) {
-      svgD.append('circle').attr('class', 'key').attr('cx', 3*width/4 - 20).attr('cy', 120).attr('r', '5').attr('fill', 'red').attr('font-size', '1.4rem').style('font-style', 'italic');
-      svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 120).attr('x2', 3*width/4 + 0 ).attr('y2', 120).attr('stroke', 'red').attr('stroke-width', '3');
-      svgD.append('text').text('N,').attr('class', 'key').attr('x', 3*width/4 +10).attr('y', 125).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
-      svgD.append('text').text('with assurance').attr('class', 'key').attr('x', 3*width/4 + 40).attr('y', 125).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('circle').attr('class', 'key').attr('cx', poslegend - 20).attr('cy', 120).attr('r', '5').attr('fill', 'red').attr('font-size', '1.4rem').style('font-style', 'italic');
+      svgD.append('line').attr('class', 'key').attr('x1', poslegend - 40 ).attr('y1', 120).attr('x2', poslegend + 0 ).attr('y2', 120).attr('stroke', 'red').attr('stroke-width', '3');
+      svgD.append('text').text('N,').attr('class', 'key').attr('x', poslegend +10).attr('y', 125).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('text').text('with assurance').attr('class', 'key').attr('x', poslegend + 40).attr('y', 125).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
 
       // //average with assurance
-      svgD.append('circle').attr('class', 'key').attr('cx', 3*width/4 - 20 ).attr('cy', 145).attr('r', '5').attr('fill', 'lightgray').attr('font-size', '1.4rem').style('font-style', 'italic');
-      svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 145).attr('x2', 3*width/4 + 0 ).attr('y2', 145).attr('stroke', 'lightgray').attr('stroke-width', '3');
-      svgD.append('text').text('N,').attr('class', 'key').attr('x', 3*width/4 + 10).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
-      svgD.append('text').text('for average MoE = target MoE').attr('class', 'key').attr('x', 3*width/4 + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      svgD.append('circle').attr('class', 'key').attr('cx', poslegend - 20 ).attr('cy', 145).attr('r', '5').attr('fill', 'lightgray').attr('font-size', '1.4rem').style('font-style', 'italic');
+      svgD.append('line').attr('class', 'key').attr('x1', poslegend - 40 ).attr('y1', 145).attr('x2', poslegend + 0 ).attr('y2', 145).attr('stroke', 'lightgray').attr('stroke-width', '3');
+      svgD.append('text').text('N,').attr('class', 'key').attr('x', poslegend + 10).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      if (!legendbreak) {
+        svgD.append('text').text('for average MoE no more than target MoE').attr('class', 'key').attr('x', poslegend + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+      }
+      else {
+        svgD.append('text').text('for average MoE no more').attr('class', 'key').attr('x', poslegend + 40).attr('y', 150).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+        svgD.append('text').text(' than target MoE').attr('class', 'key').attr('x', poslegend + 40).attr('y', 180).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+
+      }
     }
 
     // //MoE distribution
-    svgD.append('line').attr('class', 'key').attr('x1', 3*width/4 - 40 ).attr('y1', 170).attr('x2', 3*width/4 + 0 ).attr('y2', 170).attr('stroke', '#993300').attr('stroke-width', '3');
-    svgD.append('text').text('MoE distribution').attr('class', 'key').attr('x', 3*width/4 + 10).attr('y', 175).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
-
+    if (!legendbreak) {
+      svgD.append('line').attr('class', 'key').attr('x1', poslegend - 40 ).attr('y1', 170).attr('x2', poslegend + 0 ).attr('y2', 170).attr('stroke', '#993300').attr('stroke-width', '3');
+      svgD.append('text').text('MoE distribution').attr('class', 'key').attr('x', poslegend + 10).attr('y', 175).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+    }
+    else {
+      svgD.append('line').attr('class', 'key').attr('x1', poslegend - 40 ).attr('y1', 200).attr('x2', poslegend + 0 ).attr('y2', 200).attr('stroke', '#993300').attr('stroke-width', '3');
+      svgD.append('text').text('MoE distribution').attr('class', 'key').attr('x', poslegend + 10).attr('y', 205).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
+    }
     
 
   }
