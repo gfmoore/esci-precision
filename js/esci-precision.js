@@ -34,11 +34,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.14  3  Nov 2020 #8 Tooltips edited
 0.1.15  3  Nov 2020 #10 Display of N now depends on curve
 0.1.16  3  Nov 2020 #3  Temporary display of 99th percentile
+0.1.17  3  Nov 2020     Display of Target MoE to 3dp
 
 */
 //#endregion 
 
-let version = '0.1.16';
+let version = '0.1.17';
 let test = true;
 
 'use strict';
@@ -350,7 +351,7 @@ $(function() {
       max: 2.0,
       from: 0.4,
       step: 0.005,
-      prettify: prettify2,
+      prettify: prettify3,
       //on slider handles change
       onChange: function (data) {
         targetmoe = data.from;
@@ -446,6 +447,9 @@ $(function() {
       return n.toFixed(2);
     }
   
+    function prettify3(n) {
+      return n.toFixed(3);
+    }
 
   }
 
@@ -453,16 +457,16 @@ $(function() {
     if (targetmoe < 0.05) targetmoe = 0.05;
     if (targetmoe > 2.0) targetmoe = 2.0;
     $targetmoeslider.update({from: targetmoe});
-    $ciud.text(targetmoe.toFixed(2));
-    $cipd.text(targetmoe.toFixed(2));
+    $ciud.text(targetmoe.toFixed(3));
+    $cipd.text(targetmoe.toFixed(3));
   }
 
   function redrawDisplay() {
 
     if (!sliderinuse) updatetargetmoeslider();
     sliderinuse = false;
-    $ciud.text(targetmoe.toFixed(2));
-    $cipd.text(targetmoe.toFixed(2));
+    $ciud.text(targetmoe.toFixed(3));
+    $cipd.text(targetmoe.toFixed(3));
 
     $truncatedisplayudval.val(truncatedisplayud.toFixed(2));    
     $truncatedisplaypdval.val(truncatedisplaypd.toFixed(2));
@@ -1039,13 +1043,13 @@ $(function() {
      svgD.append('g').attr('class', 'bottomaxis').style("font", "1.8rem sans-serif").attr( 'transform', `translate(0, ${heightD-50})` ).call(xAxis);
 
 
+     //temp 99th percentile values
     //get Rcum value
-    let Rcum991 = 0;
-    let Rcum992 = 0;
+    let rcum991 = 0;
+    let rcum992 = 0;
     let moe991 = 0;
     let moe992 = 0;
     for (let i = 1; i < moedist.length - 1; i += 1) {
-      //lg(`fmoe: ${moedist[i].fmoe.toFixed(3)}    Rcum: ${moedist[i].Rcum}`);
       if (moedist[i].Rcum <= 0.01) {
         moe991 = moedist[i-1].fmoe;
         rcum991 = moedist[i-1].Rcum;
@@ -1053,12 +1057,8 @@ $(function() {
         rcum992 = moedist[i].Rcum;
         break;
       } 
-      // if (moedist[i].fmoe === targetmoe) {
-      //   Rcum99 = moedist[i].Rcum;
-      //   break;
-      // }
     }
-    console.log(moe991 + ' - ' + moe992);
+    //console.log(moe991 + ' - ' + moe992);
     $('#moea').text(moe991.toFixed(3));
     $('#rcuma').text(rcum991.toFixed(6));
     $('#moeb').text(moe992.toFixed(3));
