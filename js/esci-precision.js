@@ -34,12 +34,13 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.14  3  Nov 2020 #8 Tooltips edited
 0.1.15  3  Nov 2020 #10 Display of N now depends on curve
 0.1.16  3  Nov 2020 #3  Temporary display of 99th percentile
-0.1.17  3  Nov 2020     Display of Target MoE to 3dp
+0.1.17  3  Nov 2020     Display of Target MoE to 3dp (missed that!)
+0.1.18  4  Nov 2020 #11 Display N values on average curve with assurance selected
 
 */
 //#endregion 
 
-let version = '0.1.17';
+let version = '0.1.18';
 let test = true;
 
 'use strict';
@@ -190,7 +191,6 @@ $(function() {
       $CIsectionud.hide();
       $CIsectionpd.hide();
 
-      setupSledgehammer();
     }
 
     //tab switching
@@ -841,7 +841,7 @@ $(function() {
 
   function drawTargetMoEBlob() {
 
-    let n;
+    let Nass, Navg;
 
     d3.selectAll('.targetmoelineblob').remove();
     d3.selectAll('.targetmoelineblobtext').remove();
@@ -851,7 +851,7 @@ $(function() {
     if (tab === 'Unpaired' && ncurveudavg) {
       for (let i = 0; i < Nline.length; i += 1) {
         if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
-          n = Nline[i].N;
+          Navg = Nline[i].N;
           break;
         }
       }
@@ -860,7 +860,8 @@ $(function() {
     if (tab === 'Unpaired' && ncurveudass) {
       for (let i = 0; i < NlineAss.length; i += 1) {
         if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
-          n = NlineAss[i].N;
+          Nass = NlineAss[i].N;
+          Navg = Nline[i].N;
           break;
         }
       }
@@ -869,7 +870,7 @@ $(function() {
     if (tab === 'Paired' && ncurvepdavg) {
       for (let i = 0; i < Nline.length; i += 1) {
         if (Math.abs(targetmoe - Nline[i].fmoe) < 0.001) {
-          n = Nline[i].N;
+          Navg = Nline[i].N;
           break;
         }
       }
@@ -878,7 +879,8 @@ $(function() {
     if (tab === 'Paired' && ncurvepdass) {
       for (let i = 0; i < NlineAss.length; i += 1) {
         if (Math.abs(targetmoe - NlineAss[i].fmoe) < 0.001) {
-          n = NlineAss[i].N;
+          Nass = NlineAss[i].N;
+          Navg = Nline[i].N;
           break;
         }
       }
@@ -886,23 +888,35 @@ $(function() {
 
     //Now add a blob and value at intersection    
     if (tab === 'Unpaired' && ncurveudavg) {
-      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Navg)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)+5).attr('y', y(Navg)-21 ).attr('width', 35 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(Navg) - 9 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Unpaired' && ncurveudass) {
-      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Nass)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)+5).attr('y', y(Nass)-21 ).attr('width', 35 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Nass).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(Nass) - 9 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+
+      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Navg)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'lightgray');  
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)-37).attr('y', y(Navg) + 5 ).attr('width', 32 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) -36 ).attr('y', y(Navg) + 20 ).attr('text-anchor', 'start').attr('fill', 'lightgray').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdavg) {
-      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Navg)).attr('r', 4).attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'black');  
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)+5).attr('y', y(Navg)-21 ).attr('width', 35 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(Navg) - 9 ).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdass) {
-      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(n)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('text').text(n).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(n) - 5 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Nass)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)+5).attr('y', y(Nass)-21 ).attr('width', 35 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Nass).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(Nass) - 9 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+
+      svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Navg)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'lightgray');  
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)-37).attr('y', y(Navg) + 5 ).attr('width', 32 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) -36 ).attr('y', y(Navg) + 20 ).attr('text-anchor', 'start').attr('fill', 'lightgray').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     //draw a blob and N value at assuranceintersection
@@ -1035,8 +1049,8 @@ $(function() {
     if (labelh < 3) labelh = 3;
 
     svgD.append('line').attr('class', 'moecurve').attr('x1', x(notzero)).attr('y1', y(0)).attr('x2', x(notzero)).attr('y2', y(maxmoe)-20).attr('stroke', '#993300').attr('stroke-width', 1).attr('fill', 'none');
-    if (n < 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 30 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
-    if (n >= 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 36 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
+    if (N < 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 30 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
+    if (N >= 100) svgD.append('rect').attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)-16 ).attr('width', 36 ).attr('height', 18 ).attr('stroke', 0).attr('fill', 'white');
     svgD.append('text').text(N).attr('class', 'moecurve').attr('x', x(halfwayx)).attr('y', y(halfwayy)).attr('text-anchor', 'start').attr('fill', '#993300').attr('font-size', '1.8rem').attr('font-weight', 'bold');
 
      //redraw bottom horizotal axis
@@ -1045,43 +1059,27 @@ $(function() {
 
      //temp 99th percentile values
     //get Rcum value
-    let rcum991 = 0;
-    let rcum992 = 0;
-    let moe991 = 0;
-    let moe992 = 0;
-    for (let i = 1; i < moedist.length - 1; i += 1) {
-      if (moedist[i].Rcum <= 0.01) {
-        moe991 = moedist[i-1].fmoe;
-        rcum991 = moedist[i-1].Rcum;
-        moe992 = moedist[i].fmoe;
-        rcum992 = moedist[i].Rcum;
-        break;
-      } 
-    }
-    //console.log(moe991 + ' - ' + moe992);
-    $('#moea').text(moe991.toFixed(3));
-    $('#rcuma').text(rcum991.toFixed(6));
-    $('#moeb').text(moe992.toFixed(3));
-    $('#rcumb').text(rcum992.toFixed(6));
+    // let rcum991 = 0;
+    // let rcum992 = 0;
+    // let moe991 = 0;
+    // let moe992 = 0;
+    // for (let i = 1; i < moedist.length - 1; i += 1) {
+    //   if (moedist[i].Rcum <= 0.01) {
+    //     moe991 = moedist[i-1].fmoe;
+    //     rcum991 = moedist[i-1].Rcum;
+    //     moe992 = moedist[i].fmoe;
+    //     rcum992 = moedist[i].Rcum;
+    //     break;
+    //   } 
+    // }
+    // //console.log(moe991 + ' - ' + moe992);
+    // $('#moea').text(moe991.toFixed(3));
+    // $('#rcuma').text(rcum991.toFixed(6));
+    // $('#moeb').text(moe992.toFixed(3));
+    // $('#rcumb').text(rcum992.toFixed(6));
 
   }
 
-
-
-  //test radio buttons
-  $('input[type=radio][name=calctype').change(function() {
-    if (this.value === 'excel') {
-      calctype = 'excel';
-    }
-    if (this.value === 'iterate') {
-      calctype = 'iterate';
-    }
-    if (this.value === 'sledgehammer') {
-      calctype = 'sledgehammer';
-    }
-
-    drawFeatures()
-  })
 
 
   /*---------------------------------------------Tab 1 Panel 2 N Curves radio button-------------------*/
@@ -1495,313 +1493,330 @@ $(function() {
 
 
 //remove at some point.
-function calcWithExcel() {
-  return;
-  //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
-  if (tab === 'Unpaired') {
-    //average
-    for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+// function calcWithExcel() {
+//   return;
+//   //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
+//   if (tab === 'Unpaired') {
+//     //average
+//     for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
     
-      cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-      Nz = Math.ceil(2 * (cv/fmoe)**2);
-      if (Nz < 3) Nz = 3; //minimum N allowed is 3
+//       cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+//       Nz = Math.ceil(2 * (cv/fmoe)**2);
+//       if (Nz < 3) Nz = 3; //minimum N allowed is 3
 
-      df = 2*Nz-2;
-      cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-      Nt =  Math.ceil(2 * (cv/fmoe)**2);
+//       df = 2*Nz-2;
+//       cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+//       Nt =  Math.ceil(2 * (cv/fmoe)**2);
 
-      //now iterate  8 more times
-      for (let i = 2; i <= 9; i += 1) {
-        df =Math.max( Math.min(2*Math.ceil(Nt)-2, df+2 ), df-2 );
+//       //now iterate  8 more times
+//       for (let i = 2; i <= 9; i += 1) {
+//         df =Math.max( Math.min(2*Math.ceil(Nt)-2, df+2 ), df-2 );
 
-        cv = Math.abs(jStat.studentt.inv( alphaud/2, df ));
-        Nt = Math.ceil(2 * (cv/fmoe)**2);
-        if (N < 3) N = 3;
+//         cv = Math.abs(jStat.studentt.inv( alphaud/2, df ));
+//         Nt = Math.ceil(2 * (cv/fmoe)**2);
+//         if (N < 3) N = 3;
 
-        //get local max min for oscillating values
-        if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-        else             dfodd  = df;
-      }
+//         //get local max min for oscillating values
+//         if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+//         else             dfodd  = df;
+//       }
 
-      if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-      if (dfmax < 2) dfmax = 2;
-      dfmax = (dfmax + 2) / 2;
+//       if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+//       if (dfmax < 2) dfmax = 2;
+//       dfmax = (dfmax + 2) / 2;
 
-      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax } );   
-    }
+//       Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax } );   
+//     }
 
-    //assurance
-    if (ncurveudass) {
-      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+//     //assurance
+//     if (ncurveudass) {
+//       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
-        Nz = 2 * (cv/fmoe)**2;
+//         cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+//         Nz = 2 * (cv/fmoe)**2;
 
-        //first iteration - nt1 in spreadsheet
-        df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
-        cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
-        Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-        if (Nt < 3) Nt = 3;
+//         //first iteration - nt1 in spreadsheet
+//         df = 2 * Math.ceil( Nz * jStat.chisquare.inv(gamma, Math.floor(Nz)) / Math.floor(Nz) - 1);  //bit concerned whether this should be floor?
+//         cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+//         Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+//         if (Nt < 3) Nt = 3;
 
-        for (let i = 2; i <= 9; i += 1) {
-          df = Math.min( 2 * Math.ceil(Nt)-2, df+2);
+//         for (let i = 2; i <= 9; i += 1) {
+//           df = Math.min( 2 * Math.ceil(Nt)-2, df+2);
 
-          cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
-          Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
-          if (Nt < 3) Nt = 3;
+//           cv = Math.abs(jStat.studentt.inv( alphaud/2, df )); 
+//           Nt = 2 * (cv/fmoe)**2 * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df;
+//           if (Nt < 3) Nt = 3;
 
-        //get local max min for oscillating values
-        if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-        else             dfodd  = df;            
-        }
+//         //get local max min for oscillating values
+//         if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+//         else             dfodd  = df;            
+//         }
 
-        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-        if (dfmax < 2) dfmax = 2;   
-        dfmax = Math.ceil((dfmax + 2) / 2);
+//         if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+//         if (dfmax < 2) dfmax = 2;   
+//         dfmax = Math.ceil((dfmax + 2) / 2);
 
-        NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax} )    
-      }
-    }
-  }
+//         NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax} )    
+//       }
+//     }
+//   }
 
-  if (tab === 'Paired') {
-    //average
-    for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-      cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-      Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
-      if (Nz < 3) Nz = 3; //minimum N allowed is 3
+//   if (tab === 'Paired') {
+//     //average
+//     for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+//       cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+//       Nz = Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2); 
+//       if (Nz < 3) Nz = 3; //minimum N allowed is 3
 
-      df = Nz-1;
-      cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-      Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+//       df = Nz-1;
+//       cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+//       Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
 
-      //iterate for df2 and Nt2 etc
-      for (let i = 2; i <= 9; i += 1) {
-        df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
+//       //iterate for df2 and Nt2 etc
+//       for (let i = 2; i <= 9; i += 1) {
+//         df = Math.max(Math.min(Nt-1, df+1), df-1);  //I hate this, it seems a real kludge
 
-        cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
-        Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
+//         cv = Math.abs(jStat.studentt.inv( alphapd/2, df ));
+//         Nt =  Math.ceil(2 * (1 - correlationrho) * (cv/fmoe)**2);
 
-        //get local max min for oscillating values
-        if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-        else             dfodd  = df;
-      }
+//         //get local max min for oscillating values
+//         if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+//         else             dfodd  = df;
+//       }
 
-      if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-      if (dfmax < 2) dfmax = 2;
+//       if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+//       if (dfmax < 2) dfmax = 2;
       
-      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
+//       Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } );   
 
-    }
+//     }
 
-    //assurance
-    if (ncurvepdass) {
+//     //assurance
+//     if (ncurvepdass) {
 
-      //test
-      //truncatedisplaypd = 1.4;
-      //correlationrho = 0.9;
+//       //test
+//       //truncatedisplaypd = 1.4;
+//       //correlationrho = 0.9;
 
-      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
-        cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
-        Nz = Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2);
-        if (Nz < 3) Nz = 3; //minimum N allowed is 3
+//       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+//         cv = Math.abs(jStat.normal.inv( alphapd/2, 0, 1));  //1.96
+//         Nz = Math.ceil(2*(1 - correlationrho) * (cv/fmoe)**2);
+//         if (Nz < 3) Nz = 3; //minimum N allowed is 3
 
-        //first iteration - nt1 in spreadsheet
-        df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
-        cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-        Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
-        if (Nt < 3) Nt = 3;
+//         //first iteration - nt1 in spreadsheet
+//         df = Math.ceil( Math.abs( jStat.chisquare.inv(gamma, Nz) ) - 1 );
+//         cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+//         Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df );
+//         if (Nt < 3) Nt = 3;
 
-        //iterate for df2 and Nt2 etc        
-        for (let i = 2; i <= 9; i += 1) {
+//         //iterate for df2 and Nt2 etc        
+//         for (let i = 2; i <= 9; i += 1) {
 
-          df = Math.min(Math.ceil(Nt)-1, df+1);
+//           df = Math.min(Math.ceil(Nt)-1, df+1);
 
-          cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
-          Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
-          if (Nt < 3) Nt = 3;
+//           cv = Math.abs(jStat.studentt.inv( alphapd/2, df )); 
+//           Nt = Math.ceil(2*(1 - correlationrho) * (cv/fmoe) * (cv/fmoe) * ( Math.abs(jStat.chisquare.inv(gamma, df)) ) / df);
+//           if (Nt < 3) Nt = 3;
 
-          //get local max min for oscillating values
-          if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
-          else             dfodd  = df;
-        }
+//           //get local max min for oscillating values
+//           if (i % 2 === 0) dfeven = df;  //get even, odd values of Nt
+//           else             dfodd  = df;
+//         }
 
-        if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
-        if (dfmax < 2) dfmax = 2;
+//         if (dfeven > dfodd) dfmax = dfeven; else dfmax = dfodd; //which one is larger
+//         if (dfmax < 2) dfmax = 2;
 
-        NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
-      }
-    }
-  }
+//         NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: dfmax+1 } )    
+//       }
+//     }
+//   }
 
-}
+// }
 
 
-function calcWithSledgehammer() {
-  cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
+// function calcWithSledgehammer() {
+//   cv = Math.abs(jStat.normal.inv( alphaud/2, 0, 1));  //1.96
 
-  if (tab === 'Unpaired') {
-    //average
-    for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+//   if (tab === 'Unpaired') {
+//     //average
+//     for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
-      fmoe = parseFloat(fmoe.toFixed(5));
-      correlationrho = parseFloat(correlationrho.toFixed(3));
-      Nt = searchfunpairedavg(correlationrho, fmoe);  
+//       fmoe = parseFloat(fmoe.toFixed(5));
+//       correlationrho = parseFloat(correlationrho.toFixed(3));
+//       Nt = searchfunpairedavg(correlationrho, fmoe);  
 
-      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
-    }
+//       Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+//     }
 
-    //assurance
-    if (ncurveudass) {
-      for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
+//     //assurance
+//     if (ncurveudass) {
+//       for (let fmoe = truncatedisplayud; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        fmoe = parseFloat(fmoe.toFixed(5));
-        correlationrho = parseFloat(correlationrho.toFixed(3));
-        Nt = searchfunpairedass(correlationrho, fmoe);  
+//         fmoe = parseFloat(fmoe.toFixed(5));
+//         correlationrho = parseFloat(correlationrho.toFixed(3));
+//         Nt = searchfunpairedass(correlationrho, fmoe);  
 
-        NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
-      }
-    }
-  }
+//         NlineAss.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt} )    
+//       }
+//     }
+//   }
 
-  if (tab === 'Paired') {
-    //average
-    for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+//   if (tab === 'Paired') {
+//     //average
+//     for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
 
-      fmoe = parseFloat(fmoe.toFixed(5));
-      correlationrho = parseFloat(correlationrho.toFixed(3));
-      Nt = searchfpairedavg(correlationrho, fmoe);  
+//       fmoe = parseFloat(fmoe.toFixed(5));
+//       correlationrho = parseFloat(correlationrho.toFixed(3));
+//       Nt = searchfpairedavg(correlationrho, fmoe);  
 
-      Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
+//       Nline.push( { fmoe: parseFloat(fmoe.toFixed(3)), N: Nt } );   
 
-    }
+//     }
 
-    //assurance
-    if (ncurvepdass) {
-      for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
+//     //assurance
+//     if (ncurvepdass) {
+//       for (let fmoe = truncatedisplaypd; fmoe < fmoemax; fmoe += fmoeinc) {
 
-        fmoe = parseFloat(fmoe.toFixed(5));
-        correlationrho = parseFloat(correlationrho.toFixed(3));
+//         fmoe = parseFloat(fmoe.toFixed(5));
+//         correlationrho = parseFloat(correlationrho.toFixed(3));
         
-        Nt = searchfpairedass(correlationrho, fmoe);  
+//         Nt = searchfpairedass(correlationrho, fmoe);  
 
-        NlineAss.push( { fmoe: fmoe, N: Nt } )    
-      }
-    }
-  }
+//         NlineAss.push( { fmoe: fmoe, N: Nt } )    
+//       }
+//     }
+//   }
 
-}
+// }
 
-function searchfunpairedavg(rho, f) {
+// function searchfunpairedavg(rho, f) {
 
-  let i;
-  for (i=0; i<sledgeunpairedavg.length; i++) {
-    if (sledgeunpairedavg[i].rho === rho) {
-      if (sledgeunpairedavg[i].f < f) {
-        break;
-      }
-    }
-  }
-  if ( i === sledgeunpairedavg.length ) return 3;  //couldn't find one
-  if (i === 0) return 3; //the first entry can't have a previous rho
-  if (sledgeunpairedavg[i].rho !== rho) return 3;  //went back beyond current rho
-  return sledgeunpairedavg[i].N;
-}
+//   let i;
+//   for (i=0; i<sledgeunpairedavg.length; i++) {
+//     if (sledgeunpairedavg[i].rho === rho) {
+//       if (sledgeunpairedavg[i].f < f) {
+//         break;
+//       }
+//     }
+//   }
+//   if ( i === sledgeunpairedavg.length ) return 3;  //couldn't find one
+//   if (i === 0) return 3; //the first entry can't have a previous rho
+//   if (sledgeunpairedavg[i].rho !== rho) return 3;  //went back beyond current rho
+//   return sledgeunpairedavg[i].N;
+// }
 
-function searchfunpairedass(rho, f) {
+// function searchfunpairedass(rho, f) {
 
-  let i;
-  for (i=0; i<sledgeunpairedass.length; i++) {
-    if (sledgeunpairedass[i].rho === rho) {
-      if (sledgeunpairedass[i].f < f) {
-        break;
-      }
-    }
-  }
-  if ( i === sledgeunpairedass.length ) return 3;  //couldn't find one
-  if (i === 0) return 3; //the first entry can't have a previous rho
-  if (sledgeunpairedass[i].rho !== rho) return 3;  //went back beyond current rho
-  return sledgeunpairedass[i].N;
-}
+//   let i;
+//   for (i=0; i<sledgeunpairedass.length; i++) {
+//     if (sledgeunpairedass[i].rho === rho) {
+//       if (sledgeunpairedass[i].f < f) {
+//         break;
+//       }
+//     }
+//   }
+//   if ( i === sledgeunpairedass.length ) return 3;  //couldn't find one
+//   if (i === 0) return 3; //the first entry can't have a previous rho
+//   if (sledgeunpairedass[i].rho !== rho) return 3;  //went back beyond current rho
+//   return sledgeunpairedass[i].N;
+// }
 
-function searchfpairedavg(rho, f) {
-  // o = sledge.find(obj => obj.rho === rho && Math.abs(obj.f - f) < 0.001);
-  // if (o == null) return 3; //lg(`rho -->  ${rho}  f --> ${f}`);
-  // else return o.N;
+// function searchfpairedavg(rho, f) {
+//   // o = sledge.find(obj => obj.rho === rho && Math.abs(obj.f - f) < 0.001);
+//   // if (o == null) return 3; //lg(`rho -->  ${rho}  f --> ${f}`);
+//   // else return o.N;
 
-  let i;
-  for (i=0; i<sledgepairedavg.length; i++) {
-    if (sledgepairedavg[i].rho === rho) {
-      if (sledgepairedavg[i].f < f) {
-        break;
-      }
-    }
-  }
-  if ( i === sledgepairedavg.length ) return 3;  //couldn't find one
-  if (i === 0) return 3; //the first entry can't have a previous rho
-  if (sledgepairedavg[i].rho !== rho) return 3;  //went back beyond current rho
-  return sledgepairedavg[i].N;
-}
+//   let i;
+//   for (i=0; i<sledgepairedavg.length; i++) {
+//     if (sledgepairedavg[i].rho === rho) {
+//       if (sledgepairedavg[i].f < f) {
+//         break;
+//       }
+//     }
+//   }
+//   if ( i === sledgepairedavg.length ) return 3;  //couldn't find one
+//   if (i === 0) return 3; //the first entry can't have a previous rho
+//   if (sledgepairedavg[i].rho !== rho) return 3;  //went back beyond current rho
+//   return sledgepairedavg[i].N;
+// }
 
-function searchfpairedass(rho, f) {
+// function searchfpairedass(rho, f) {
 
-  let i;
-  for (i=0; i<sledgepairedass.length; i++) {
-    if (sledgepairedass[i].rho === rho) {
-      if (sledgepairedass[i].f < f) {
-        break;
-      }
-    }
-  }
-  if ( i === sledgepairedass.length ) return 3;  //couldn't find one
-  if (i === 0) return 3; //the first entry can't have a previous rho
-  if (sledgepairedass[i].rho !== rho) return 3;  //went back beyond current rho
-  return sledgepairedass[i].N;
-}
+//   let i;
+//   for (i=0; i<sledgepairedass.length; i++) {
+//     if (sledgepairedass[i].rho === rho) {
+//       if (sledgepairedass[i].f < f) {
+//         break;
+//       }
+//     }
+//   }
+//   if ( i === sledgepairedass.length ) return 3;  //couldn't find one
+//   if (i === 0) return 3; //the first entry can't have a previous rho
+//   if (sledgepairedass[i].rho !== rho) return 3;  //went back beyond current rho
+//   return sledgepairedass[i].N;
+// }
 
-function setupSledgehammer() {
-return;
-  sledgeunpairedavg = [];
-  sledgeunpairedass = [];
-  sledgepairedavg = [];
-  sledgepairedass = [];
+// function setupSledgehammer() {
+// return;
+//   sledgeunpairedavg = [];
+//   sledgeunpairedass = [];
+//   sledgepairedavg = [];
+//   sledgepairedass = [];
 
-  //Unpaired average
-  for (let rho = 0; rho < 1; rho += 0.01) {
-    for (let N = 3; N <= 3300; N += 1 ) {
-      f = Math.abs( jStat.studentt.inv( alphapd/2, 2*N-2 )) / Math.sqrt( N / 2 );
+//   //Unpaired average
+//   for (let rho = 0; rho < 1; rho += 0.01) {
+//     for (let N = 3; N <= 3300; N += 1 ) {
+//       f = Math.abs( jStat.studentt.inv( alphapd/2, 2*N-2 )) / Math.sqrt( N / 2 );
       
-      sledgeunpairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-    }
-  }
+//       sledgeunpairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+//     }
+//   }
 
-  //Unpaired assurance
-  for (let rho = 0; rho < 1; rho += 0.01) {
-    for (let N = 3; N <= 3300; N += 1 ) {
-      f = Math.abs( jStat.studentt.inv( alphaud/2, 2*N - 2 ) ) / (Math.sqrt( N * (N - 1) / ( jStat.chisquare.inv(gamma, 2*N - 2))  )) ;
+//   //Unpaired assurance
+//   for (let rho = 0; rho < 1; rho += 0.01) {
+//     for (let N = 3; N <= 3300; N += 1 ) {
+//       f = Math.abs( jStat.studentt.inv( alphaud/2, 2*N - 2 ) ) / (Math.sqrt( N * (N - 1) / ( jStat.chisquare.inv(gamma, 2*N - 2))  )) ;
 
-      sledgeunpairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-    }
-  }
+//       sledgeunpairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+//     }
+//   }
 
 
-  //Paired average
-  for (let rho = 0; rho < 1; rho += 0.01) {
-    for (let N = 3; N <= 3300; N += 1 ) {
-      f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N / (2*(1-rho)) );
+//   //Paired average
+//   for (let rho = 0; rho < 1; rho += 0.01) {
+//     for (let N = 3; N <= 3300; N += 1 ) {
+//       f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N / (2*(1-rho)) );
       
-      sledgepairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-    }
-  }
+//       sledgepairedavg.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+//     }
+//   }
 
-  //Paired assurance
-  for (let rho = 0; rho < 1; rho += 0.01) {
-    for (let N = 3; N <= 3300; N += 1 ) {
-      f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N * (N-1) / (2*(1-rho) * jStat.chisquare.inv(gamma, N-1)) );
+//   //Paired assurance
+//   for (let rho = 0; rho < 1; rho += 0.01) {
+//     for (let N = 3; N <= 3300; N += 1 ) {
+//       f = Math.abs( jStat.studentt.inv( alphapd/2, N-1 )) / Math.sqrt( N * (N-1) / (2*(1-rho) * jStat.chisquare.inv(gamma, N-1)) );
       
-      sledgepairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
-    }
-  }
+//       sledgepairedass.push( { rho: parseFloat(rho.toFixed(2)), N: N, f: parseFloat(f.toFixed(6)) } );
+//     }
+//   }
 
 
-}
+// }
+
+
+
+  //test radio buttons
+  // $('input[type=radio][name=calctype').change(function() {
+  //   if (this.value === 'excel') {
+  //     calctype = 'excel';
+  //   }
+  //   if (this.value === 'iterate') {
+  //     calctype = 'iterate';
+  //   }
+  //   if (this.value === 'sledgehammer') {
+  //     calctype = 'sledgehammer';
+  //   }
+
+  //   drawFeatures()
+  // })
