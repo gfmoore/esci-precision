@@ -20,7 +20,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.4   28 Oct 2020 #6 Added a missed maximum to dt for Paired assurance calcs, Added temp radio button for type of calc
 0.1.15
 0.1.16  3  Nov 2020 #3  Temporary display of 99th percentile
-0.1.18
+0.1.19
 
 #endregion */
 
@@ -230,6 +230,11 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
   padding: 0.5rem;
 }
 
+#displayudpanel {
+  display: grid;
+  grid-template-columns: 20rem auto;
+}
+
 /*---------------Tab 1 Panel 4 Truncate display----------------------------------------------*/
 
 #truncatedisplayudpanel {
@@ -329,6 +334,11 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
   border: 1px solid black;
   background-color: #FFBBDD;
   padding: 0.5rem;
+}
+
+#displaypdpanel {
+  display: grid;
+  grid-template-columns: 20rem auto;
 }
 
 /*---------------Tab 2 Panel 5 Truncate display----------------------------------------------*/

@@ -36,11 +36,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.16  3  Nov 2020 #3  Temporary display of 99th percentile
 0.1.17  3  Nov 2020     Display of Target MoE to 3dp (missed that!)
 0.1.18  4  Nov 2020 #11 Display N values on average curve with assurance selected
+0.1.19  4  Nov 2020 #12 Added gridlines option
 
 */
 //#endregion 
 
-let version = '0.1.18';
+let version = '0.1.19';
 let test = true;
 
 'use strict';
@@ -114,14 +115,16 @@ $(function() {
 
   //tab 1 panel 3
   const $displayvaluesud = $('#displayvaluesud');
-  displayvaluesud = false;
+  let displayvaluesud = false;
+  const $displaygridlinesud = $('#displaygridlinesud');
+  let displaygridlinesud = false
 
   //tab 1 panel 4
   let $truncatedisplayudslider = $('#truncatedisplayudslider');
   let truncatedisplayud = 0.25;
-  $truncatedisplayudval = $('#truncatedisplayudval');
+  let $truncatedisplayudval = $('#truncatedisplayudval');
   $truncatedisplayudval.val(0.25.toFixed(2));
-  $truncatedisplayudnudgebackward = $('#truncatedisplayudnudgebackward');
+  let $truncatedisplayudnudgebackward = $('#truncatedisplayudnudgebackward');
   $truncatedisplayudnudgeforward = $('#truncatedisplayudnudgeforward');
 
   //tab 1 panel 5 CI
@@ -146,6 +149,8 @@ $(function() {
 
   const $ncurvepdass = $('#ncurvepdass');
   let ncurvepdass = false;
+  const $displaygridlinespd = $('#displaygridlinespd');
+  let displaygridlinespd = false
 
   //tab 2 panel 4
 
@@ -528,11 +533,14 @@ $(function() {
 
     d3.selectAll('.key').remove();
 
+    d3.selectAll('.gridlines').remove();
+
     width   = rwidth - margin.left - margin.right;  
     heightD = $('#display').outerHeight(true) - margin.top - margin.bottom;
 
     x = d3.scaleLinear().domain([0, 2.0]).range([margin.left, width]);
     y = d3.scaleLinear().domain([0, maxN]).range([heightD-50, 60]);  
+
 
     //bottom horizontal axis
     xAxis = d3.axisBottom(x);   //.tickSizeOuter(0);  //tickSizeOuter gets rid of the start and end ticks
@@ -587,6 +595,30 @@ $(function() {
     //   }
     // }
 
+
+    //draw grid lines
+    //let yinterval = d3.ticks(0, maxN, 16);  //gets an array of where it is putting tick marks
+    const yAxisTickValues = yAxis.scale().ticks()
+
+    if (tab === 'Unpaired' && displaygridlinesud) {
+      for (let xi = 0; xi < 2; xi += 0.1) {
+        svgD.append('line').attr('class', 'gridlines').attr('x1', x(xi) ).attr('y1', y(0) ).attr('x2', x(xi) ).attr('y2', y(maxN) ).attr('stroke', '#e5e4e2').attr('stroke-width', '1');   //e5e4e2 = platinum
+      }
+      for (yi = 0; yi < yAxisTickValues.length; yi += 1) {
+        svgD.append('line').attr('class', 'gridlines').attr('x1', x(0) ).attr('y1', y(yAxisTickValues[yi]) ).attr('x2', x(2) ).attr('y2', y(yAxisTickValues[yi]) ).attr('stroke', '#e5e4e2').attr('stroke-width', '1');
+      }
+    }
+
+    if (tab === 'Paired' && displaygridlinespd) {
+      for (let xi = 0; xi < 2; xi += 0.1) {
+        svgD.append('line').attr('class', 'gridlines').attr('x1', x(xi) ).attr('y1', y(0) ).attr('x2', x(xi) ).attr('y2', y(maxN) ).attr('stroke', '#e5e4e2').attr('stroke-width', '1');
+      }
+      for (let yi = 0; yi < yAxisTickValues.length; yi += 1) {
+        svgD.append('line').attr('class', 'gridlines').attr('x1', x(0) ).attr('y1', y(yAxisTickValues[yi]) ).attr('x2', x(2) ).attr('y2', y(yAxisTickValues[yi]) ).attr('stroke', '#e5e4e2').attr('stroke-width', '1');
+      }
+    }
+    
+
     //display key
     let poslegend = width-420;
     let legendbreak = false;
@@ -640,6 +672,8 @@ $(function() {
       svgD.append('text').text('MoE distribution').attr('class', 'key').attr('x', poslegend + 10).attr('y', 205).attr('text-anchor', 'start').attr('fill', 'black').attr('font-size', '1.8rem').style('font-style', 'italic');
     }
     
+
+
 
   }
 
@@ -1106,6 +1140,12 @@ $(function() {
     drawFeatures()
   })
 
+  $displaygridlinesud.on('change', function() {
+    displaygridlinesud = $displaygridlinesud.is(':checked');
+
+    drawFeatures();
+  })
+
   /*---------------------------------------------Tab 1 Panel 4 Truncate MoE----------------------------*/
 
   /*-------------------------------------------- Tab 1 Panel 5 CIs-------------------------------------*/
@@ -1134,12 +1174,20 @@ $(function() {
     drawFeatures()
   })
 
+
+
   /*---------------------------------------------Tab 2 Panel 4 Display Values checkbox-------------------*/
 
   $displayvaluespd.on('change', function() {
     displayvaluespd = $displayvaluespd.is(':checked');
 
-    drawFeatures()
+    drawFeatures();
+  })
+
+  $displaygridlinespd.on('change', function() {
+    displaygridlinespd = $displaygridlinespd.is(':checked');
+
+    drawFeatures();
   })
 
   /*---------------------------------------------Tab 2 Panel 5 Truncate MoE----------------------------*/
@@ -1437,6 +1485,7 @@ $(function() {
     Tipped.create('.ncassurancetip', 'Red curve shows how <em>N</em> varies with target MoE with 99% assurance (grey curve: on average)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
     Tipped.create('.dispvalstip', 'Turn on or off the display of <em>N</em> values at each point on displayed curve(s)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
+    Tipped.create('.dispgridlinestip', 'Turn on or off the display of grid lines', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     
     Tipped.create('.truncatetip', 'Use slider to choose where to truncate the left end of curve(s)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     Tipped.create('.truncateslidertip', 'Select a value between 0.05 and 0.30', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
@@ -1492,7 +1541,7 @@ $(function() {
 })
 
 
-//remove at some point.
+//#region remove at some point.
 // function calcWithExcel() {
 //   return;
 //   //create datasets Nline, NlineAss //get N,    note fmoe is the f that Prof. Cumming uses in book
@@ -1820,3 +1869,5 @@ $(function() {
 
   //   drawFeatures()
   // })
+
+  //#endregion
