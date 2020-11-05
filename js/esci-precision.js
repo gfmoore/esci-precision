@@ -37,11 +37,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.17  3  Nov 2020     Display of Target MoE to 3dp (missed that!)
 0.1.18  4  Nov 2020 #11 Display N values on average curve with assurance selected
 0.1.19  4  Nov 2020 #12 Added gridlines option
+0.1.20  5  Nov 2020 #11 Positioning and color of N adjusted for assurance.
 
 */
 //#endregion 
 
-let version = '0.1.19';
+let version = '0.1.20';
 let test = true;
 
 'use strict';
@@ -933,8 +934,8 @@ $(function() {
       svgD.append('text').text(Nass).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(Nass) - 9 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
 
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Navg)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'lightgray');  
-      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)-37).attr('y', y(Navg) + 5 ).attr('width', 32 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
-      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) -36 ).attr('y', y(Navg) + 20 ).attr('text-anchor', 'start').attr('fill', 'lightgray').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)-34).attr('y', y(Navg) + 2 ).attr('width', 32 ).attr('height', 19 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) -33 ).attr('y', y(Navg) + 17 ).attr('text-anchor', 'start').attr('fill', 'silver').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     if (tab === 'Paired' && ncurvepdavg) {
@@ -945,12 +946,12 @@ $(function() {
 
     if (tab === 'Paired' && ncurvepdass) {
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Nass)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'red');  
-      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)+5).attr('y', y(Nass)-21 ).attr('width', 35 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)+5).attr('y', y(Nass)-21 ).attr('width', 35 ).attr('height', 19 ).attr('stroke', 0).attr('fill', 'white');
       svgD.append('text').text(Nass).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) + 5 ).attr('y', y(Nass) - 9 ).attr('text-anchor', 'start').attr('fill', 'red').attr('font-size', '1.6rem').attr('font-weight', 'bold');
 
       svgD.append('circle').attr('class', 'targetmoelineblob').attr('cx', x(targetmoe)).attr('cy', y(Navg)).attr('r', 4).attr('stroke', 'red').attr('stroke-width', 1).attr('fill', 'lightgray');  
-      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)-37).attr('y', y(Navg) + 5 ).attr('width', 32 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
-      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) -36 ).attr('y', y(Navg) + 20 ).attr('text-anchor', 'start').attr('fill', 'lightgray').attr('font-size', '1.6rem').attr('font-weight', 'bold');
+      svgD.append('rect').attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe)-34).attr('y', y(Navg) + 2 ).attr('width', 32 ).attr('height', 17 ).attr('stroke', 0).attr('fill', 'white');
+      svgD.append('text').text(Navg).attr('class', 'targetmoelineblobtext').attr('x', x(targetmoe) -33 ).attr('y', y(Navg) + 17 ).attr('text-anchor', 'start').attr('fill', 'silver').attr('font-size', '1.6rem').attr('font-weight', 'bold');
     }
 
     //draw a blob and N value at assuranceintersection
@@ -977,6 +978,7 @@ $(function() {
 
     let moedist = [];
     let f;
+    let fgamma;
     let f2; //(^2/() in Excel)
     //let n;
     //let df;
