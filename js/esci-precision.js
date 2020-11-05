@@ -38,11 +38,12 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.18  4  Nov 2020 #11 Display N values on average curve with assurance selected
 0.1.19  4  Nov 2020 #12 Added gridlines option
 0.1.20  5  Nov 2020 #11 Positioning and color of N adjusted for assurance.
+0.1.21  5  Nov 2020 #12 Grid lines initially on and tooltip change
 
 */
 //#endregion 
 
-let version = '0.1.20';
+let version = '0.1.21';
 let test = true;
 
 'use strict';
@@ -118,7 +119,7 @@ $(function() {
   const $displayvaluesud = $('#displayvaluesud');
   let displayvaluesud = false;
   const $displaygridlinesud = $('#displaygridlinesud');
-  let displaygridlinesud = false
+  let displaygridlinesud = true;
 
   //tab 1 panel 4
   let $truncatedisplayudslider = $('#truncatedisplayudslider');
@@ -151,7 +152,7 @@ $(function() {
   const $ncurvepdass = $('#ncurvepdass');
   let ncurvepdass = false;
   const $displaygridlinespd = $('#displaygridlinespd');
-  let displaygridlinespd = false
+  let displaygridlinespd = true;
 
   //tab 2 panel 4
 
@@ -602,7 +603,7 @@ $(function() {
     const yAxisTickValues = yAxis.scale().ticks()
 
     if (tab === 'Unpaired' && displaygridlinesud) {
-      for (let xi = 0; xi < 2; xi += 0.1) {
+      for (let xi = 0; xi <= 2.1; xi += 0.1) {
         svgD.append('line').attr('class', 'gridlines').attr('x1', x(xi) ).attr('y1', y(0) ).attr('x2', x(xi) ).attr('y2', y(maxN) ).attr('stroke', '#e5e4e2').attr('stroke-width', '1');   //e5e4e2 = platinum
       }
       for (yi = 0; yi < yAxisTickValues.length; yi += 1) {
@@ -611,7 +612,7 @@ $(function() {
     }
 
     if (tab === 'Paired' && displaygridlinespd) {
-      for (let xi = 0; xi < 2; xi += 0.1) {
+      for (let xi = 0; xi <= 2.1; xi += 0.1) {
         svgD.append('line').attr('class', 'gridlines').attr('x1', x(xi) ).attr('y1', y(0) ).attr('x2', x(xi) ).attr('y2', y(maxN) ).attr('stroke', '#e5e4e2').attr('stroke-width', '1');
       }
       for (let yi = 0; yi < yAxisTickValues.length; yi += 1) {
@@ -1486,6 +1487,7 @@ $(function() {
     Tipped.create('.ncaveragetip', 'Black curve shows how <em>N</em> varies with target MoE on average', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     Tipped.create('.ncassurancetip', 'Red curve shows how <em>N</em> varies with target MoE with 99% assurance (grey curve: on average)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
 
+    Tipped.create('.dispvalsheadertip', 'Turn features on or off', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     Tipped.create('.dispvalstip', 'Turn on or off the display of <em>N</em> values at each point on displayed curve(s)', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     Tipped.create('.dispgridlinestip', 'Turn on or off the display of grid lines', { skin: 'esci', size: 'xlarge', showDelay: 750, behavior: 'mouse', target: 'mouse', maxWidth: 250, hideOthers: true, hideOnClickOutside: true, hideAfter: 0 });
     
