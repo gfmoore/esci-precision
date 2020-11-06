@@ -39,6 +39,7 @@ Licence       GNU General Public LIcence Version 3, 29 June 2007
 0.1.19  4  Nov 2020 #12 Added gridlines option
 0.1.20  5  Nov 2020 #11 Positioning and color of N adjusted for assurance.
 0.1.21  5  Nov 2020 #12 Grid lines initially on and tooltip change
+0.1.22  6  Nov 2020 #12 Change text in panel3/4
 
 */
 //#endregion 
